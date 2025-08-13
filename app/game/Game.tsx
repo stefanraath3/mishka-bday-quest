@@ -260,7 +260,7 @@ export default function Game() {
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0x82aaff });
     const loader = new GLTFLoader();
     loader.load(
-      "/models/character.glb",
+      "/models/character-walking.glb",
       (gltf: GLTF) => {
         const model = gltf.scene;
         model.scale.setScalar(1);
