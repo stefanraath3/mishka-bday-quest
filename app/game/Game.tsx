@@ -95,6 +95,11 @@ export default function Game() {
   const [pointerLocked, setPointerLocked] = useState(false);
 
   useEffect(() => {
+    // Game state refs (for use inside animation loop)
+    const gameState = {
+      keyCollected: false,
+      doorOpen: false,
+    };
     const container = mountRef.current;
     if (!container) return;
 
@@ -430,11 +435,12 @@ export default function Game() {
       );
 
       // Key pickup
-      if (!keyCollected) {
+      if (!gameState.keyCollected) {
         const distToKey = playerGroup.position.distanceTo(keyMesh.position);
         if (distToKey < 1.0) {
-          setKeyCollected(true);
+          gameState.keyCollected = true;
           keyMesh.visible = false;
+          setKeyCollected(true); // Update React state for UI
         } else {
           // idle spin
           keyMesh.rotation.y += delta * 1.0;
@@ -442,7 +448,7 @@ export default function Game() {
       }
 
       // Open door if key collected
-      if (keyCollected && !doorOpen) {
+      if (gameState.keyCollected && !gameState.doorOpen) {
         const targetY = wallHeight + 0.1;
         doorMesh.position.y = THREE.MathUtils.damp(
           doorMesh.position.y,
@@ -454,9 +460,10 @@ export default function Game() {
         doorCollider.box = makeAabb(doorMesh.position, doorSize);
         if (doorMesh.position.y > wallHeight - 0.2) {
           doorCollider.active = false;
-          setDoorOpen(true);
+          gameState.doorOpen = true;
+          setDoorOpen(true); // Update React state for UI
         }
-      } else if (!keyCollected) {
+      } else if (!gameState.keyCollected) {
         // Keep collider synced if door closed
         doorCollider.box = makeAabb(doorMesh.position, doorSize);
       }
@@ -495,7 +502,7 @@ export default function Game() {
         }
       });
     };
-  }, [keyCollected, doorOpen]);
+  }, []);
 
   return (
     <div className="relative w-full h-[100svh] select-none">
