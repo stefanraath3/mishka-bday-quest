@@ -46,14 +46,14 @@ export function createWallTorchGeometry(): THREE.Group {
   head.position.set(0.4, 0.25, 0);
   torchGroup.add(head);
 
-  // Flame (animated)
-  const flameGeometry = new THREE.ConeGeometry(0.06, 0.2, 6);
+  // Flame (animated) - larger for more impact
+  const flameGeometry = new THREE.ConeGeometry(0.09, 0.3, 6);
   const flame = new THREE.Mesh(flameGeometry, flameMaterial);
-  flame.position.set(0.4, 0.4, 0);
+  flame.position.set(0.4, 0.45, 0);
   torchGroup.add(flame);
 
   // Inner flame glow - brighter and more intense
-  const glowGeometry = new THREE.ConeGeometry(0.05, 0.18, 6);
+  const glowGeometry = new THREE.ConeGeometry(0.07, 0.25, 6);
   const glowMaterial = new THREE.MeshStandardMaterial({
     color: 0xffdd00,
     emissive: 0xff8800,
@@ -62,7 +62,7 @@ export function createWallTorchGeometry(): THREE.Group {
     opacity: 0.85,
   });
   const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-  glow.position.set(0.4, 0.38, 0);
+  glow.position.set(0.4, 0.42, 0);
   torchGroup.add(glow);
 
   // Store flame references for animation

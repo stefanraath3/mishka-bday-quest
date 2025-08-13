@@ -138,12 +138,13 @@ export default function AncientScroll({
             {/* Riddle Text */}
             <div className="text-center mb-6">
               <p className="text-amber-800 text-lg italic leading-relaxed">
-                &ldquo;In chambers of reflection, where souls seek to mend,
+                &ldquo;A night of confession, but not in a pew,
                 <br />
-                A gathering of friends, where old ways transcend.
+                Where laughter and mischief are part of the view.
                 <br />
-                What word do you whisper, when the music grows loud,
-                <br />A secret that bonds you, away from the crowd?&rdquo;
+                We twist the old word for a cheeky affair,
+                <br />
+                What’s the nickname for ‘repentance’ we share?&rdquo;
               </p>
             </div>
 

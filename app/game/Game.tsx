@@ -124,7 +124,7 @@ export default function Game() {
 
     // Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x2a1a10); // Much brighter warm dungeon atmosphere
+    scene.background = new THREE.Color(0x1a1a1a); // Dark grey, less red
 
     // Camera
     const camera = new THREE.PerspectiveCamera(
@@ -135,12 +135,12 @@ export default function Game() {
     );
     camera.position.set(0, 1.6, 4);
 
-    // Bright, warm dungeon lighting system
-    const ambientLight = new THREE.AmbientLight(0x664433, 0.8); // Much brighter warm ambient
+    // Neutral grey lighting system
+    const ambientLight = new THREE.AmbientLight(0x909090, 0.7); // Neutral grey ambient
     scene.add(ambientLight);
 
-    // Bright overhead light
-    const mainLight = new THREE.DirectionalLight(0xffaa77, 2.5);
+    // Bright overhead light (neutral color)
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.8);
     mainLight.position.set(0, 8, 2);
     mainLight.castShadow = true;
     mainLight.shadow.mapSize.width = 2048;
@@ -202,6 +202,7 @@ export default function Game() {
       const torchGroup = createWallTorchGeometry();
       torchGroup.position.copy(torch.pos);
       torchGroup.rotation.copy(torch.rot);
+      torchGroup.scale.setScalar(1.5); // Increase torch size
       scene.add(torchGroup);
       torches.push(torchGroup);
 
@@ -224,65 +225,65 @@ export default function Game() {
     keyLight.position.set(10, 1.5, 10);
     scene.add(keyLight);
 
-    // Enhanced floor with cleaner stone texture - larger grand space
+    // Enhanced floor with stoney grey texture
     const floorSize = 30;
     const floorGeo = new THREE.PlaneGeometry(floorSize, floorSize);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x707070, // Even lighter base color
-      roughness: 0.6,
+      color: 0xa0a0a0, // Light stoney grey
+      roughness: 0.7,
       metalness: 0.05,
     });
 
-    // Create cleaner stone floor texture
+    // Create stoney grey floor texture
     const canvas = document.createElement("canvas");
-    canvas.width = 256;
-    canvas.height = 256;
+    canvas.width = 512;
+    canvas.height = 512;
     const ctx = canvas.getContext("2d")!;
 
-    // Base stone color - brighter
-    ctx.fillStyle = "#707070";
-    ctx.fillRect(0, 0, 256, 256);
+    // Base stone color - lighter grey
+    ctx.fillStyle = "#a0a0a0";
+    ctx.fillRect(0, 0, 512, 512);
 
-    // Add large stone tiles (4x4 grid)
-    ctx.strokeStyle = "#5a5a5a";
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 4; i++) {
-      const pos = (i * 256) / 4;
+    // Add large stone tiles (8x8 grid)
+    ctx.strokeStyle = "#888888";
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i <= 8; i++) {
+      const pos = (i * 512) / 8;
       ctx.beginPath();
       ctx.moveTo(pos, 0);
-      ctx.lineTo(pos, 256);
+      ctx.lineTo(pos, 512);
       ctx.stroke();
       ctx.beginPath();
       ctx.moveTo(0, pos);
-      ctx.lineTo(256, pos);
+      ctx.lineTo(512, pos);
       ctx.stroke();
     }
 
     // Add subtle stone variations within tiles
-    for (let y = 0; y < 4; y++) {
-      for (let x = 0; x < 4; x++) {
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 8; x++) {
         const tileX = x * 64;
         const tileY = y * 64;
 
         // Add some darker spots
+        for (let i = 0; i < 4; i++) {
+          ctx.fillStyle = "rgba(0,0,0,0.05)";
+          ctx.fillRect(
+            tileX + Math.random() * 60 + 2,
+            tileY + Math.random() * 60 + 2,
+            Math.random() * 10 + 5,
+            Math.random() * 10 + 5
+          );
+        }
+
+        // Add some lighter spots
         for (let i = 0; i < 3; i++) {
-          ctx.fillStyle = "#606060";
+          ctx.fillStyle = "rgba(255,255,255,0.05)";
           ctx.fillRect(
             tileX + Math.random() * 60 + 2,
             tileY + Math.random() * 60 + 2,
             Math.random() * 8 + 4,
             Math.random() * 8 + 4
-          );
-        }
-
-        // Add some lighter spots
-        for (let i = 0; i < 2; i++) {
-          ctx.fillStyle = "#808080";
-          ctx.fillRect(
-            tileX + Math.random() * 60 + 2,
-            tileY + Math.random() * 60 + 2,
-            Math.random() * 6 + 3,
-            Math.random() * 6 + 3
           );
         }
       }
@@ -303,7 +304,7 @@ export default function Game() {
     const wallThickness = 0.5;
     const roomHalf = floorSize / 2;
     const wallMat = new THREE.MeshStandardMaterial({
-      color: 0x707580,
+      color: 0xaaaaaa, // Lighter grey walls
       roughness: 0.8,
       metalness: 0.05,
     });
@@ -315,11 +316,11 @@ export default function Game() {
     const wallCtx = wallCanvas.getContext("2d")!;
 
     // Base stone color
-    wallCtx.fillStyle = "#5a5f67";
+    wallCtx.fillStyle = "#888888";
     wallCtx.fillRect(0, 0, 256, 256);
 
     // Add stone block pattern
-    wallCtx.strokeStyle = "#4a4f57";
+    wallCtx.strokeStyle = "#707070";
     wallCtx.lineWidth = 1;
     for (let y = 0; y < 256; y += 32) {
       for (let x = 0; x < 256; x += 64) {
@@ -328,9 +329,10 @@ export default function Game() {
       }
     }
 
-    // Add weathering and moss
+    // Add weathering (no more moss)
     for (let i = 0; i < 50; i++) {
-      wallCtx.fillStyle = Math.random() > 0.7 ? "#4a6741" : "#4a4f57"; // Moss or darker stone
+      wallCtx.fillStyle =
+        Math.random() > 0.5 ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.05)"; // Darker or lighter grey spots
       wallCtx.fillRect(
         Math.random() * 256,
         Math.random() * 256,
@@ -427,7 +429,7 @@ export default function Game() {
     const doorCenter = new THREE.Vector3(0, wallHeight / 2, farZ);
     const doorMesh = createMedievalDoorGeometry();
     doorMesh.position.copy(doorCenter);
-    doorMesh.scale.set(0.95, 1.0, 1.0); // Slightly smaller to fit nicely in doorway
+    doorMesh.scale.set(1.2, 1.1, 1.0); // Increase door size to be more prominent
     scene.add(doorMesh);
     const doorCollider: AabbCollider = {
       id: "door",

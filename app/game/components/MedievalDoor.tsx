@@ -34,8 +34,8 @@ export function createMedievalDoorGeometry(): THREE.Group {
   // Main door planks (vertical wooden boards)
   const plankWidth = 0.4;
   const plankHeight = 3.0;
-  const plankDepth = 0.08;
-  const numPlanks = 7;
+  const plankDepth = 0.1; // Thicker planks
+  const numPlanks = 9; // More planks for a wider door
   const totalWidth = numPlanks * plankWidth;
 
   for (let i = 0; i < numPlanks; i++) {
@@ -55,120 +55,120 @@ export function createMedievalDoorGeometry(): THREE.Group {
   }
 
   // Horizontal reinforcement beams
-  const beamPositions = [-1.0, 0, 1.0]; // Top, middle, bottom
+  const beamPositions = [-1.1, 0, 1.1]; // Adjusted for new height
   beamPositions.forEach((yPos) => {
-    const beamGeometry = new THREE.BoxGeometry(totalWidth + 0.2, 0.15, 0.12);
+    const beamGeometry = new THREE.BoxGeometry(totalWidth + 0.2, 0.2, 0.15); // Thicker beams
     const beam = new THREE.Mesh(beamGeometry, darkWoodMaterial);
-    beam.position.set(0, yPos, 0.06);
+    beam.position.set(0, yPos, 0.08);
     doorGroup.add(beam);
   });
 
   // Iron reinforcement bands
-  const bandPositions = [-1.2, -0.4, 0.4, 1.2];
+  const bandPositions = [-1.3, -0.5, 0.5, 1.3];
   bandPositions.forEach((yPos) => {
-    const bandGeometry = new THREE.BoxGeometry(totalWidth + 0.1, 0.08, 0.02);
+    const bandGeometry = new THREE.BoxGeometry(totalWidth + 0.1, 0.1, 0.03); // Thicker bands
     const band = new THREE.Mesh(bandGeometry, ironMaterial);
-    band.position.set(0, yPos, 0.13);
+    band.position.set(0, yPos, 0.16);
     doorGroup.add(band);
   });
 
   // Iron studs/rivets on the bands
   bandPositions.forEach((yPos) => {
-    for (let x = -1.2; x <= 1.2; x += 0.4) {
-      const studGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.04, 8);
+    for (let x = -totalWidth / 2 + 0.2; x <= totalWidth / 2 - 0.2; x += 0.5) {
+      const studGeometry = new THREE.CylinderGeometry(0.04, 0.04, 0.05, 8); // Larger studs
       const stud = new THREE.Mesh(studGeometry, rustIronMaterial);
-      stud.position.set(x, yPos, 0.15);
+      stud.position.set(x, yPos, 0.18);
       stud.rotation.x = Math.PI / 2;
       doorGroup.add(stud);
     }
   });
 
   // Door handle/ring
-  const handleRingGeometry = new THREE.TorusGeometry(0.12, 0.02, 8, 16);
+  const handleRingGeometry = new THREE.TorusGeometry(0.15, 0.03, 8, 16); // Larger ring
   const handleRing = new THREE.Mesh(handleRingGeometry, ironMaterial);
-  handleRing.position.set(0.8, 0.2, 0.15);
+  handleRing.position.set(1.2, 0.2, 0.18);
   doorGroup.add(handleRing);
 
   // Handle mounting plate
-  const handlePlateGeometry = new THREE.CylinderGeometry(0.08, 0.08, 0.02, 8);
+  const handlePlateGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.03, 8); // Larger plate
   const handlePlate = new THREE.Mesh(handlePlateGeometry, rustIronMaterial);
-  handlePlate.position.set(0.8, 0.2, 0.14);
+  handlePlate.position.set(1.2, 0.2, 0.17);
   handlePlate.rotation.x = Math.PI / 2;
   doorGroup.add(handlePlate);
 
   // Corner reinforcements (L-shaped iron brackets)
   const cornerPositions = [
-    { x: -totalWidth / 2 + 0.1, y: plankHeight / 2 - 0.1 },
-    { x: totalWidth / 2 - 0.1, y: plankHeight / 2 - 0.1 },
-    { x: -totalWidth / 2 + 0.1, y: -plankHeight / 2 + 0.1 },
-    { x: totalWidth / 2 - 0.1, y: -plankHeight / 2 + 0.1 },
+    { x: -totalWidth / 2 + 0.15, y: plankHeight / 2 - 0.15 },
+    { x: totalWidth / 2 - 0.15, y: plankHeight / 2 - 0.15 },
+    { x: -totalWidth / 2 + 0.15, y: -plankHeight / 2 + 0.15 },
+    { x: totalWidth / 2 - 0.15, y: -plankHeight / 2 + 0.15 },
   ];
 
   cornerPositions.forEach((pos) => {
     // Vertical part of L-bracket
-    const vBracketGeometry = new THREE.BoxGeometry(0.06, 0.3, 0.02);
+    const vBracketGeometry = new THREE.BoxGeometry(0.08, 0.4, 0.03); // Larger brackets
     const vBracket = new THREE.Mesh(vBracketGeometry, ironMaterial);
-    vBracket.position.set(pos.x, pos.y, 0.13);
+    vBracket.position.set(pos.x, pos.y, 0.16);
     doorGroup.add(vBracket);
 
     // Horizontal part of L-bracket
-    const hBracketGeometry = new THREE.BoxGeometry(0.3, 0.06, 0.02);
+    const hBracketGeometry = new THREE.BoxGeometry(0.4, 0.08, 0.03); // Larger brackets
     const hBracket = new THREE.Mesh(hBracketGeometry, ironMaterial);
-    hBracket.position.set(pos.x, pos.y, 0.13);
+    hBracket.position.set(pos.x, pos.y, 0.16);
     doorGroup.add(hBracket);
   });
 
   // Central decorative iron cross
-  const crossVerticalGeometry = new THREE.BoxGeometry(0.08, 0.8, 0.02);
+  const crossVerticalGeometry = new THREE.BoxGeometry(0.1, 1.0, 0.03); // Larger cross
   const crossVertical = new THREE.Mesh(crossVerticalGeometry, rustIronMaterial);
-  crossVertical.position.set(0, 0, 0.13);
+  crossVertical.position.set(0, 0, 0.16);
   doorGroup.add(crossVertical);
 
-  const crossHorizontalGeometry = new THREE.BoxGeometry(0.6, 0.08, 0.02);
+  const crossHorizontalGeometry = new THREE.BoxGeometry(0.8, 0.1, 0.03); // Larger cross
   const crossHorizontal = new THREE.Mesh(
     crossHorizontalGeometry,
     rustIronMaterial
   );
-  crossHorizontal.position.set(0, 0, 0.13);
+  crossHorizontal.position.set(0, 0, 0.16);
   doorGroup.add(crossHorizontal);
 
   // Lock mechanism (keyhole plate)
-  const lockPlateGeometry = new THREE.BoxGeometry(0.2, 0.3, 0.03);
+  const lockPlateGeometry = new THREE.BoxGeometry(0.25, 0.4, 0.04); // Larger plate
   const lockPlate = new THREE.Mesh(lockPlateGeometry, ironMaterial);
-  lockPlate.position.set(0.6, -0.1, 0.14);
+  lockPlate.position.set(0.9, -0.1, 0.17);
   doorGroup.add(lockPlate);
 
   // Keyhole
-  const keyholeGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.04, 8);
+  const keyholeGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.05, 8);
   const keyhole = new THREE.Mesh(
     keyholeGeometry,
     new THREE.MeshStandardMaterial({ color: 0x000000 })
   );
-  keyhole.position.set(0.6, -0.05, 0.16);
+  keyhole.position.set(0.9, -0.05, 0.19);
   keyhole.rotation.x = Math.PI / 2;
   doorGroup.add(keyhole);
 
   // Keyhole slot (vertical slot below the round hole)
-  const slotGeometry = new THREE.BoxGeometry(0.01, 0.08, 0.04);
+  const slotGeometry = new THREE.BoxGeometry(0.015, 0.1, 0.05);
   const slot = new THREE.Mesh(
     slotGeometry,
     new THREE.MeshStandardMaterial({ color: 0x000000 })
   );
-  slot.position.set(0.6, -0.09, 0.16);
+  slot.position.set(0.9, -0.1, 0.19);
   doorGroup.add(slot);
 
   // Add some wear and aging details (small scratches/dents)
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 15; i++) {
     const scratchGeometry = new THREE.BoxGeometry(
-      0.02,
-      Math.random() * 0.1 + 0.05,
-      0.005
+      0.03,
+      Math.random() * 0.15 + 0.08,
+      0.01
     );
     const scratch = new THREE.Mesh(scratchGeometry, darkWoodMaterial);
     scratch.position.set(
-      (Math.random() - 0.5) * totalWidth * 0.8,
-      (Math.random() - 0.5) * plankHeight * 0.8,
-      0.08
+      (Math.random() - 0.5) * totalWidth * 0.9,
+      (Math.random() - 0.5) * plankHeight * 0.9,
+      0.1
     );
     scratch.rotation.z = Math.random() * Math.PI;
     doorGroup.add(scratch);
