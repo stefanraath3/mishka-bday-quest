@@ -7,6 +7,7 @@ import {
   type GLTF,
 } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { createOrnateKeyGeometry } from "./components/OrnateFloatingKey";
+import { createMedievalDoorGeometry } from "./components/MedievalDoor";
 
 type InputState = {
   forward: boolean;
@@ -18,7 +19,7 @@ type InputState = {
 type AabbCollider = {
   id: string;
   box: THREE.Box3;
-  mesh?: THREE.Mesh;
+  mesh?: THREE.Mesh | THREE.Group;
   active: boolean;
 };
 
@@ -195,19 +196,12 @@ export default function Game() {
       "wall-far-right"
     );
 
-    // Door block initially closed in the doorway
+    // Medieval door initially closed in the doorway
     const doorSize = new THREE.Vector3(doorWidth, wallHeight, wallThickness);
     const doorCenter = new THREE.Vector3(0, wallHeight / 2, farZ);
-    const doorMat = new THREE.MeshStandardMaterial({
-      color: 0x6b8ba4,
-      metalness: 0.1,
-      roughness: 0.6,
-    });
-    const doorMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(doorSize.x, doorSize.y, doorSize.z),
-      doorMat
-    );
+    const doorMesh = createMedievalDoorGeometry();
     doorMesh.position.copy(doorCenter);
+    doorMesh.scale.set(0.95, 1.0, 1.0); // Slightly smaller to fit nicely in doorway
     scene.add(doorMesh);
     const doorCollider: AabbCollider = {
       id: "door",
@@ -487,7 +481,7 @@ export default function Game() {
       renderer.dispose();
       container.removeChild(renderer.domElement);
       // dispose geometries/materials
-      [floor, ...wallMeshes, doorMesh].forEach((m) => {
+      [floor, ...wallMeshes].forEach((m) => {
         if (!m) return;
         if (m.geometry) m.geometry.dispose();
         const material = m.material as THREE.Material | THREE.Material[];
@@ -503,6 +497,25 @@ export default function Game() {
       // Dispose ornate key group
       if (keyMesh) {
         keyMesh.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+              const material = child.material as
+                | THREE.Material
+                | THREE.Material[];
+              if (Array.isArray(material)) {
+                material.forEach((mat) => mat.dispose());
+              } else {
+                material.dispose();
+              }
+            }
+          }
+        });
+      }
+
+      // Dispose medieval door group
+      if (doorMesh) {
+        doorMesh.traverse((child) => {
           if (child instanceof THREE.Mesh) {
             if (child.geometry) child.geometry.dispose();
             if (child.material) {
