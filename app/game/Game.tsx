@@ -105,11 +105,15 @@ export default function Game() {
     const container = mountRef.current;
     if (!container) return;
 
-    // Renderer
+    // Renderer with shadows enabled
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
     container.appendChild(renderer.domElement);
 
     // Scene
@@ -125,29 +129,143 @@ export default function Game() {
     );
     camera.position.set(0, 1.6, 4);
 
-    // Lights
-    const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
-    hemi.position.set(0, 20, 0);
-    scene.add(hemi);
-    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-    dir.position.set(5, 10, 5);
-    dir.castShadow = false;
-    scene.add(dir);
+    // Enhanced lighting system
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.3); // Dim ambient
+    scene.add(ambientLight);
 
-    // Floor
+    // Main directional light (sunlight/moonlight through windows)
+    const mainLight = new THREE.DirectionalLight(0xffeaa7, 1.2);
+    mainLight.position.set(8, 12, 6);
+    mainLight.castShadow = true;
+    mainLight.shadow.mapSize.width = 2048;
+    mainLight.shadow.mapSize.height = 2048;
+    mainLight.shadow.camera.near = 0.5;
+    mainLight.shadow.camera.far = 50;
+    mainLight.shadow.camera.left = -15;
+    mainLight.shadow.camera.right = 15;
+    mainLight.shadow.camera.top = 15;
+    mainLight.shadow.camera.bottom = -15;
+    scene.add(mainLight);
+
+    // Warm fill light from opposite direction
+    const fillLight = new THREE.DirectionalLight(0xff7675, 0.4);
+    fillLight.position.set(-3, 8, -4);
+    scene.add(fillLight);
+
+    // Point lights for atmospheric lighting
+    const torchLight1 = new THREE.PointLight(0xffa500, 0.8, 8);
+    torchLight1.position.set(-8, 2, 0);
+    scene.add(torchLight1);
+
+    const torchLight2 = new THREE.PointLight(0xffa500, 0.8, 8);
+    torchLight2.position.set(8, 2, 0);
+    scene.add(torchLight2);
+
+    // Magical key light
+    const keyLight = new THREE.PointLight(0xffd700, 0.6, 4);
+    keyLight.position.set(4, 1, 0);
+    scene.add(keyLight);
+
+    // Enhanced floor with stone texture
     const floorSize = 24;
     const floorGeo = new THREE.PlaneGeometry(floorSize, floorSize);
-    const floorMat = new THREE.MeshStandardMaterial({ color: 0x2a2d34 });
+    const floorMat = new THREE.MeshStandardMaterial({
+      color: 0x4a4a4a,
+      roughness: 0.8,
+      metalness: 0.1,
+    });
+
+    // Add procedural stone pattern
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext("2d")!;
+
+    // Base stone color
+    ctx.fillStyle = "#4a4a4a";
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Add stone tile lines
+    ctx.strokeStyle = "#3a3a3a";
+    ctx.lineWidth = 2;
+    for (let i = 0; i <= 8; i++) {
+      const pos = (i * 512) / 8;
+      ctx.beginPath();
+      ctx.moveTo(pos, 0);
+      ctx.lineTo(pos, 512);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, pos);
+      ctx.lineTo(512, pos);
+      ctx.stroke();
+    }
+
+    // Add random stone variations
+    for (let i = 0; i < 100; i++) {
+      ctx.fillStyle = Math.random() > 0.5 ? "#555555" : "#3f3f3f";
+      ctx.fillRect(
+        Math.random() * 512,
+        Math.random() * 512,
+        Math.random() * 20 + 5,
+        Math.random() * 20 + 5
+      );
+    }
+
+    const floorTexture = new THREE.CanvasTexture(canvas);
+    floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+    floorTexture.repeat.set(4, 4);
+    floorMat.map = floorTexture;
+
     const floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotation.x = -Math.PI / 2;
-    floor.receiveShadow = false;
+    floor.receiveShadow = true;
     scene.add(floor);
 
-    // Walls and chamber
+    // Walls and chamber with enhanced stone material
     const wallHeight = 3;
     const wallThickness = 0.5;
     const roomHalf = floorSize / 2;
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x3a3f47 });
+    const wallMat = new THREE.MeshStandardMaterial({
+      color: 0x5a5f67,
+      roughness: 0.9,
+      metalness: 0.05,
+    });
+
+    // Create stone wall texture
+    const wallCanvas = document.createElement("canvas");
+    wallCanvas.width = 256;
+    wallCanvas.height = 256;
+    const wallCtx = wallCanvas.getContext("2d")!;
+
+    // Base stone color
+    wallCtx.fillStyle = "#5a5f67";
+    wallCtx.fillRect(0, 0, 256, 256);
+
+    // Add stone block pattern
+    wallCtx.strokeStyle = "#4a4f57";
+    wallCtx.lineWidth = 1;
+    for (let y = 0; y < 256; y += 32) {
+      for (let x = 0; x < 256; x += 64) {
+        const offset = (y / 32) % 2 === 0 ? 0 : 32;
+        wallCtx.strokeRect(x + offset, y, 64, 32);
+      }
+    }
+
+    // Add weathering and moss
+    for (let i = 0; i < 50; i++) {
+      wallCtx.fillStyle = Math.random() > 0.7 ? "#4a6741" : "#4a4f57"; // Moss or darker stone
+      wallCtx.fillRect(
+        Math.random() * 256,
+        Math.random() * 256,
+        Math.random() * 8 + 2,
+        Math.random() * 8 + 2
+      );
+    }
+
+    const wallTexture = new THREE.CanvasTexture(wallCanvas);
+    wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
+    wallTexture.repeat.set(2, 1);
+    wallMat.map = wallTexture;
     const colliders: AabbCollider[] = [];
     const wallMeshes: THREE.Mesh[] = [];
 
@@ -157,8 +275,8 @@ export default function Game() {
         wallMat
       );
       mesh.position.copy(center);
-      mesh.castShadow = false;
-      mesh.receiveShadow = false;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
       scene.add(mesh);
       wallMeshes.push(mesh);
       colliders.push({ id, box: makeAabb(center, size), mesh, active: true });
@@ -251,6 +369,12 @@ export default function Game() {
     const playerY = playerRadius + 0.1; // keep above floor
     playerGroup.position.set(0, playerY, -4);
 
+    // Character animation system
+    let mixer: THREE.AnimationMixer | null = null;
+    let walkAction: THREE.AnimationAction | null = null;
+    let idleAction: THREE.AnimationAction | null = null;
+    let isWalking = false;
+
     // Attempt to load a GLB character; fallback to a capsule if missing
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0x82aaff });
     const loader = new GLTFLoader();
@@ -260,7 +384,48 @@ export default function Game() {
         const model = gltf.scene;
         model.scale.setScalar(1);
         model.position.set(0, -playerY, 0);
+
+        // Enable shadows on character
+        model.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+
         playerGroup.add(model);
+
+        // Setup animation mixer
+        if (gltf.animations && gltf.animations.length > 0) {
+          mixer = new THREE.AnimationMixer(model);
+
+          // Look for walk and idle animations
+          gltf.animations.forEach((clip, index) => {
+            const action = mixer!.clipAction(clip);
+
+            // Try to identify animation types by name or use first two
+            const name = clip.name.toLowerCase();
+            if (name.includes("walk") || name.includes("run") || index === 0) {
+              walkAction = action;
+              walkAction.setLoop(THREE.LoopRepeat, Infinity);
+            } else if (
+              name.includes("idle") ||
+              name.includes("stand") ||
+              index === 1
+            ) {
+              idleAction = action;
+              idleAction.setLoop(THREE.LoopRepeat, Infinity);
+            }
+          });
+
+          // Start with idle animation
+          if (idleAction) {
+            idleAction.play();
+          } else if (walkAction) {
+            walkAction.play();
+            walkAction.paused = true;
+          }
+        }
       },
       undefined,
       () => {
@@ -274,8 +439,8 @@ export default function Game() {
           ),
           bodyMat
         );
-        capsule.castShadow = false;
-        capsule.receiveShadow = false;
+        capsule.castShadow = true;
+        capsule.receiveShadow = true;
         capsule.position.set(0, 0, 0);
         capsule.rotation.y = Math.PI;
         playerGroup.add(capsule);
@@ -374,6 +539,11 @@ export default function Game() {
     let rafId = 0;
 
     function update(delta: number) {
+      // Update animation mixer
+      if (mixer) {
+        mixer.update(delta);
+      }
+
       // Movement vector in local (XZ) space
       const dir = new THREE.Vector3(0, 0, 0);
       if (input.forward) dir.z -= 1;
@@ -381,6 +551,30 @@ export default function Game() {
       if (input.left) dir.x -= 1;
       if (input.right) dir.x += 1;
       if (dir.lengthSq() > 0) dir.normalize();
+
+      // Handle animation state changes
+      const shouldWalk = dir.lengthSq() > 0.0001;
+      if (shouldWalk !== isWalking) {
+        isWalking = shouldWalk;
+
+        if (isWalking) {
+          // Switch to walk animation
+          if (idleAction) {
+            idleAction.fadeOut(0.2);
+          }
+          if (walkAction) {
+            walkAction.reset().fadeIn(0.2).play();
+          }
+        } else {
+          // Switch to idle animation
+          if (walkAction) {
+            walkAction.fadeOut(0.2);
+          }
+          if (idleAction) {
+            idleAction.reset().fadeIn(0.2).play();
+          }
+        }
+      }
 
       // Rotate by yaw
       const cos = Math.cos(yaw);
