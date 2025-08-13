@@ -5,7 +5,6 @@ import * as THREE from "three";
 
 interface OrnateFloatingKeyProps {
   position: THREE.Vector3;
-  onCollect?: () => void;
   collected?: boolean;
   scale?: number;
 }
@@ -93,7 +92,6 @@ export function createOrnateKeyGeometry(): THREE.Group {
 
 export default function OrnateFloatingKey({
   position,
-  onCollect,
   collected = false,
   scale = 1,
 }: OrnateFloatingKeyProps) {
@@ -101,7 +99,8 @@ export default function OrnateFloatingKey({
   const mountRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!mountRef.current || collected) return;
+    const container = mountRef.current;
+    if (!container || collected) return;
 
     // Create a mini scene just for this key component
     const scene = new THREE.Scene();
@@ -113,7 +112,7 @@ export default function OrnateFloatingKey({
 
     renderer.setSize(100, 100); // Small preview size
     renderer.setClearColor(0x000000, 0); // Transparent
-    mountRef.current.appendChild(renderer.domElement);
+    container.appendChild(renderer.domElement);
 
     // Create the key
     const keyGroup = createOrnateKeyGeometry();
@@ -150,8 +149,8 @@ export default function OrnateFloatingKey({
 
     return () => {
       cancelAnimationFrame(animationId);
-      if (mountRef.current && renderer.domElement) {
-        mountRef.current.removeChild(renderer.domElement);
+      if (container && renderer.domElement) {
+        container.removeChild(renderer.domElement);
       }
       renderer.dispose();
     };
