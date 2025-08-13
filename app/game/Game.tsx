@@ -9,7 +9,7 @@ import {
 import { createOrnateKeyGeometry } from "./components/OrnateFloatingKey";
 import { createMedievalDoorGeometry } from "./components/MedievalDoor";
 import { createWallTorchGeometry, animateTorch } from "./components/WallTorch";
-import CrosswordPuzzle from "./components/CrosswordPuzzle";
+import AncientScroll from "./components/AncientScroll";
 
 type InputState = {
   forward: boolean;
@@ -872,7 +872,7 @@ export default function Game() {
         });
       });
     };
-  }, [showCrossword]);
+  }, []);
 
   const handlePuzzleSolved = () => {
     setPuzzleSolved(true);
@@ -911,8 +911,8 @@ export default function Game() {
         )}
       </div>
 
-      {/* Crossword Puzzle Modal */}
-      <CrosswordPuzzle
+      {/* Ancient Scroll Puzzle Modal */}
+      <AncientScroll
         isVisible={showCrossword}
         onSolved={handlePuzzleSolved}
         onClose={handleCloseCrossword}
