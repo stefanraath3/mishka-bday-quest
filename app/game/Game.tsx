@@ -136,11 +136,11 @@ export default function Game() {
     camera.position.set(0, 1.6, 4);
 
     // Dramatic, localized lighting system
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.15); // Very dim ambient light
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.25); // Slightly brighter ambient
     scene.add(ambientLight);
 
     // Dim overhead light - just enough to give shape, no shadows
-    const mainLight = new THREE.DirectionalLight(0xffffff, 0.1);
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.15); // Slightly brighter
     mainLight.position.set(0, 10, 5);
     mainLight.castShadow = false; // Turn off shadows for the main light
     scene.add(mainLight);
@@ -198,7 +198,7 @@ export default function Game() {
       torches.push(torchGroup);
 
       // Add bright, fiery point light for each torch
-      const torchLight = new THREE.PointLight(0xff6600, 15, 18); // Brighter, larger radius
+      const torchLight = new THREE.PointLight(0xff6600, 22, 22); // Brighter, larger radius
       torchLight.position.copy(torch.pos);
       const lightOffset = 0.8; // How far the light is from the wall
       if (torch.rot.y === 0) torchLight.position.z -= lightOffset;
@@ -217,7 +217,7 @@ export default function Game() {
     });
 
     // Magical key light (more subtle now)
-    const keyLight = new THREE.PointLight(0xffd700, 2, 6);
+    const keyLight = new THREE.PointLight(0xffd700, 3, 8);
     keyLight.position.set(10, 1.5, 10);
     scene.add(keyLight);
 
@@ -732,9 +732,9 @@ export default function Game() {
         animateTorch(torch, time + index * 0.5); // Offset each torch slightly
 
         // Flicker torch lights (bright and fiery)
-        const baseIntensity = 15.0;
+        const baseIntensity = 22.0;
         const flicker =
-          Math.sin(time * 10 + index) * 2.5 + Math.sin(time * 18 + index) * 1.5;
+          Math.sin(time * 10 + index) * 3.5 + Math.sin(time * 18 + index) * 2;
         torchLights[index].intensity = baseIntensity + flicker;
       });
 
