@@ -119,7 +119,7 @@ export default function Game() {
 
     // Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0505); // Dark reddish dungeon atmosphere
+    scene.background = new THREE.Color(0x1a0f0a); // Warmer, slightly brighter dungeon atmosphere
 
     // Camera
     const camera = new THREE.PerspectiveCamera(
@@ -130,22 +130,23 @@ export default function Game() {
     );
     camera.position.set(0, 1.6, 4);
 
-    // Dungeon lighting system - intimate and moody
-    const ambientLight = new THREE.AmbientLight(0x301010, 0.2); // Very dim reddish ambient
+    // Enhanced dungeon lighting system
+    const ambientLight = new THREE.AmbientLight(0x402020, 0.4); // Brighter reddish ambient
     scene.add(ambientLight);
 
-    // Main dramatic light (single overhead source)
-    const mainLight = new THREE.DirectionalLight(0xff8844, 0.8);
-    mainLight.position.set(0, 8, 2);
+    // Main overhead light (brighter and warmer)
+    const mainLight = new THREE.DirectionalLight(0xffa866, 1.5);
+    mainLight.position.set(0, 10, 0);
     mainLight.castShadow = true;
     mainLight.shadow.mapSize.width = 2048;
     mainLight.shadow.mapSize.height = 2048;
     mainLight.shadow.camera.near = 0.5;
-    mainLight.shadow.camera.far = 20;
+    mainLight.shadow.camera.far = 25;
     mainLight.shadow.camera.left = -15;
     mainLight.shadow.camera.right = 15;
     mainLight.shadow.camera.top = 15;
     mainLight.shadow.camera.bottom = -15;
+    mainLight.shadow.bias = -0.0001; // Reduce shadow acne
     scene.add(mainLight);
 
     // Wall torches with flickering lights
@@ -179,10 +180,16 @@ export default function Game() {
       scene.add(torchGroup);
       torches.push(torchGroup);
 
-      // Add flickering point light for each torch
-      const torchLight = new THREE.PointLight(0xff4500, 1.2, 6);
+      // Add flickering point light for each torch with shadows
+      const torchLight = new THREE.PointLight(0xff6622, 2.0, 8);
       torchLight.position.copy(torch.pos);
       torchLight.position.x += torch.rot.y > 0 ? 0.5 : -0.5; // Offset from wall
+      torchLight.castShadow = true;
+      torchLight.shadow.mapSize.width = 1024;
+      torchLight.shadow.mapSize.height = 1024;
+      torchLight.shadow.camera.near = 0.1;
+      torchLight.shadow.camera.far = 8;
+      torchLight.shadow.bias = -0.0001;
       scene.add(torchLight);
       torchLights.push(torchLight);
     });
@@ -192,54 +199,73 @@ export default function Game() {
     keyLight.position.set(4, 1, 0);
     scene.add(keyLight);
 
-    // Enhanced floor with stone texture
+    // Enhanced floor with cleaner stone texture
     const floorSize = 24;
     const floorGeo = new THREE.PlaneGeometry(floorSize, floorSize);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x4a4a4a,
-      roughness: 0.8,
-      metalness: 0.1,
+      color: 0x5a5a5a, // Lighter base color
+      roughness: 0.7,
+      metalness: 0.05,
     });
 
-    // Add procedural stone pattern
+    // Create cleaner stone floor texture
     const canvas = document.createElement("canvas");
-    canvas.width = 512;
-    canvas.height = 512;
+    canvas.width = 256;
+    canvas.height = 256;
     const ctx = canvas.getContext("2d")!;
 
     // Base stone color
-    ctx.fillStyle = "#4a4a4a";
-    ctx.fillRect(0, 0, 512, 512);
+    ctx.fillStyle = "#5a5a5a";
+    ctx.fillRect(0, 0, 256, 256);
 
-    // Add stone tile lines
-    ctx.strokeStyle = "#3a3a3a";
-    ctx.lineWidth = 2;
-    for (let i = 0; i <= 8; i++) {
-      const pos = (i * 512) / 8;
+    // Add large stone tiles (4x4 grid)
+    ctx.strokeStyle = "#4a4a4a";
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const pos = (i * 256) / 4;
       ctx.beginPath();
       ctx.moveTo(pos, 0);
-      ctx.lineTo(pos, 512);
+      ctx.lineTo(pos, 256);
       ctx.stroke();
       ctx.beginPath();
       ctx.moveTo(0, pos);
-      ctx.lineTo(512, pos);
+      ctx.lineTo(256, pos);
       ctx.stroke();
     }
 
-    // Add random stone variations
-    for (let i = 0; i < 100; i++) {
-      ctx.fillStyle = Math.random() > 0.5 ? "#555555" : "#3f3f3f";
-      ctx.fillRect(
-        Math.random() * 512,
-        Math.random() * 512,
-        Math.random() * 20 + 5,
-        Math.random() * 20 + 5
-      );
+    // Add subtle stone variations within tiles
+    for (let y = 0; y < 4; y++) {
+      for (let x = 0; x < 4; x++) {
+        const tileX = x * 64;
+        const tileY = y * 64;
+
+        // Add some darker spots
+        for (let i = 0; i < 3; i++) {
+          ctx.fillStyle = "#505050";
+          ctx.fillRect(
+            tileX + Math.random() * 60 + 2,
+            tileY + Math.random() * 60 + 2,
+            Math.random() * 8 + 4,
+            Math.random() * 8 + 4
+          );
+        }
+
+        // Add some lighter spots
+        for (let i = 0; i < 2; i++) {
+          ctx.fillStyle = "#656565";
+          ctx.fillRect(
+            tileX + Math.random() * 60 + 2,
+            tileY + Math.random() * 60 + 2,
+            Math.random() * 6 + 3,
+            Math.random() * 6 + 3
+          );
+        }
+      }
     }
 
     const floorTexture = new THREE.CanvasTexture(canvas);
     floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-    floorTexture.repeat.set(4, 4);
+    floorTexture.repeat.set(6, 6); // More repetitions for finer detail
     floorMat.map = floorTexture;
 
     const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -625,10 +651,10 @@ export default function Game() {
       torches.forEach((torch, index) => {
         animateTorch(torch, time + index * 0.5); // Offset each torch slightly
 
-        // Flicker torch lights
-        const baseIntensity = 1.2;
+        // Flicker torch lights (more subtle)
+        const baseIntensity = 2.0;
         const flicker =
-          Math.sin(time * 8 + index) * 0.3 + Math.sin(time * 12 + index) * 0.2;
+          Math.sin(time * 6 + index) * 0.2 + Math.sin(time * 10 + index) * 0.1;
         torchLights[index].intensity = baseIntensity + flicker;
       });
 
