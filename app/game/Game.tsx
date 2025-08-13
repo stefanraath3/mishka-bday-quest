@@ -124,7 +124,7 @@ export default function Game() {
 
     // Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a0f0a); // Warmer, slightly brighter dungeon atmosphere
+    scene.background = new THREE.Color(0x2a1a10); // Much brighter warm dungeon atmosphere
 
     // Camera
     const camera = new THREE.PerspectiveCamera(
@@ -135,41 +135,41 @@ export default function Game() {
     );
     camera.position.set(0, 1.6, 4);
 
-    // Enhanced dungeon lighting system
-    const ambientLight = new THREE.AmbientLight(0x402020, 0.4); // Brighter reddish ambient
+    // Bright, warm dungeon lighting system
+    const ambientLight = new THREE.AmbientLight(0x664433, 0.8); // Much brighter warm ambient
     scene.add(ambientLight);
 
-    // Main overhead light (brighter and warmer)
-    const mainLight = new THREE.DirectionalLight(0xffa866, 1.5);
-    mainLight.position.set(0, 10, 0);
+    // Bright overhead light
+    const mainLight = new THREE.DirectionalLight(0xffaa77, 2.5);
+    mainLight.position.set(0, 8, 2);
     mainLight.castShadow = true;
     mainLight.shadow.mapSize.width = 2048;
     mainLight.shadow.mapSize.height = 2048;
     mainLight.shadow.camera.near = 0.5;
-    mainLight.shadow.camera.far = 25;
-    mainLight.shadow.camera.left = -15;
-    mainLight.shadow.camera.right = 15;
-    mainLight.shadow.camera.top = 15;
-    mainLight.shadow.camera.bottom = -15;
-    mainLight.shadow.bias = -0.0001; // Reduce shadow acne
+    mainLight.shadow.camera.far = 20;
+    mainLight.shadow.camera.left = -10;
+    mainLight.shadow.camera.right = 10;
+    mainLight.shadow.camera.top = 10;
+    mainLight.shadow.camera.bottom = -10;
+    mainLight.shadow.bias = -0.0001;
     scene.add(mainLight);
 
-    // Wall torches with flickering lights
+    // Wall torches with flickering lights - positioned for smaller room
     const torchPositions = [
       {
-        pos: new THREE.Vector3(-10, 2, -8),
+        pos: new THREE.Vector3(-6.5, 2.2, -6),
         rot: new THREE.Euler(0, Math.PI / 2, 0),
       },
       {
-        pos: new THREE.Vector3(10, 2, -8),
+        pos: new THREE.Vector3(6.5, 2.2, -6),
         rot: new THREE.Euler(0, -Math.PI / 2, 0),
       },
       {
-        pos: new THREE.Vector3(-10, 2, 8),
+        pos: new THREE.Vector3(-6.5, 2.2, 6),
         rot: new THREE.Euler(0, Math.PI / 2, 0),
       },
       {
-        pos: new THREE.Vector3(10, 2, 8),
+        pos: new THREE.Vector3(6.5, 2.2, 6),
         rot: new THREE.Euler(0, -Math.PI / 2, 0),
       },
     ];
@@ -185,15 +185,15 @@ export default function Game() {
       scene.add(torchGroup);
       torches.push(torchGroup);
 
-      // Add flickering point light for each torch with shadows
-      const torchLight = new THREE.PointLight(0xff6622, 2.0, 8);
+      // Add bright, fiery point light for each torch
+      const torchLight = new THREE.PointLight(0xff4400, 4.0, 10);
       torchLight.position.copy(torch.pos);
-      torchLight.position.x += torch.rot.y > 0 ? 0.5 : -0.5; // Offset from wall
+      torchLight.position.x += torch.rot.y > 0 ? 0.6 : -0.6; // Offset from wall
       torchLight.castShadow = true;
       torchLight.shadow.mapSize.width = 1024;
       torchLight.shadow.mapSize.height = 1024;
       torchLight.shadow.camera.near = 0.1;
-      torchLight.shadow.camera.far = 8;
+      torchLight.shadow.camera.far = 10;
       torchLight.shadow.bias = -0.0001;
       scene.add(torchLight);
       torchLights.push(torchLight);
@@ -204,12 +204,12 @@ export default function Game() {
     keyLight.position.set(4, 1, 0);
     scene.add(keyLight);
 
-    // Enhanced floor with cleaner stone texture
-    const floorSize = 24;
+    // Enhanced floor with cleaner stone texture - smaller intimate space
+    const floorSize = 16;
     const floorGeo = new THREE.PlaneGeometry(floorSize, floorSize);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x5a5a5a, // Lighter base color
-      roughness: 0.7,
+      color: 0x707070, // Even lighter base color
+      roughness: 0.6,
       metalness: 0.05,
     });
 
@@ -219,12 +219,12 @@ export default function Game() {
     canvas.height = 256;
     const ctx = canvas.getContext("2d")!;
 
-    // Base stone color
-    ctx.fillStyle = "#5a5a5a";
+    // Base stone color - brighter
+    ctx.fillStyle = "#707070";
     ctx.fillRect(0, 0, 256, 256);
 
     // Add large stone tiles (4x4 grid)
-    ctx.strokeStyle = "#4a4a4a";
+    ctx.strokeStyle = "#5a5a5a";
     ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) {
       const pos = (i * 256) / 4;
@@ -246,7 +246,7 @@ export default function Game() {
 
         // Add some darker spots
         for (let i = 0; i < 3; i++) {
-          ctx.fillStyle = "#505050";
+          ctx.fillStyle = "#606060";
           ctx.fillRect(
             tileX + Math.random() * 60 + 2,
             tileY + Math.random() * 60 + 2,
@@ -257,7 +257,7 @@ export default function Game() {
 
         // Add some lighter spots
         for (let i = 0; i < 2; i++) {
-          ctx.fillStyle = "#656565";
+          ctx.fillStyle = "#808080";
           ctx.fillRect(
             tileX + Math.random() * 60 + 2,
             tileY + Math.random() * 60 + 2,
@@ -283,8 +283,8 @@ export default function Game() {
     const wallThickness = 0.5;
     const roomHalf = floorSize / 2;
     const wallMat = new THREE.MeshStandardMaterial({
-      color: 0x5a5f67,
-      roughness: 0.9,
+      color: 0x707580,
+      roughness: 0.8,
       metalness: 0.05,
     });
 
@@ -656,10 +656,10 @@ export default function Game() {
       torches.forEach((torch, index) => {
         animateTorch(torch, time + index * 0.5); // Offset each torch slightly
 
-        // Flicker torch lights (more subtle)
-        const baseIntensity = 2.0;
+        // Flicker torch lights (bright and fiery)
+        const baseIntensity = 4.0;
         const flicker =
-          Math.sin(time * 6 + index) * 0.2 + Math.sin(time * 10 + index) * 0.1;
+          Math.sin(time * 8 + index) * 0.4 + Math.sin(time * 12 + index) * 0.2;
         torchLights[index].intensity = baseIntensity + flicker;
       });
 

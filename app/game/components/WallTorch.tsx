@@ -19,11 +19,11 @@ export function createWallTorchGeometry(): THREE.Group {
   });
 
   const flameMaterial = new THREE.MeshStandardMaterial({
-    color: 0xff4500,
-    emissive: 0xff2200,
-    emissiveIntensity: 0.8,
+    color: 0xff3300,
+    emissive: 0xff4400,
+    emissiveIntensity: 1.5,
     transparent: true,
-    opacity: 0.9,
+    opacity: 0.95,
   });
 
   // Wall mount bracket
@@ -52,14 +52,14 @@ export function createWallTorchGeometry(): THREE.Group {
   flame.position.set(0.4, 0.4, 0);
   torchGroup.add(flame);
 
-  // Inner flame glow
-  const glowGeometry = new THREE.ConeGeometry(0.04, 0.15, 6);
+  // Inner flame glow - brighter and more intense
+  const glowGeometry = new THREE.ConeGeometry(0.05, 0.18, 6);
   const glowMaterial = new THREE.MeshStandardMaterial({
-    color: 0xffaa00,
-    emissive: 0xff6600,
-    emissiveIntensity: 1.0,
+    color: 0xffdd00,
+    emissive: 0xff8800,
+    emissiveIntensity: 2.0,
     transparent: true,
-    opacity: 0.7,
+    opacity: 0.85,
   });
   const glow = new THREE.Mesh(glowGeometry, glowMaterial);
   glow.position.set(0.4, 0.38, 0);
