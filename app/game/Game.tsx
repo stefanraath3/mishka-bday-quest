@@ -119,7 +119,7 @@ export default function Game() {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.56; // Increased by 30% from 1.2
     container.appendChild(renderer.domElement);
 
     // Scene
