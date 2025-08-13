@@ -41,19 +41,20 @@ The core gameplay is designed to be a repeating cycle of exploration, discovery,
 
 The first level introduces the core mechanics in an atmospheric setting.
 
-**Setting:** A small, intimate (16x16) medieval dungeon chamber.
-**Atmosphere:** Dark, warm, and moody. The feeling of a secret, kinky dungeon.
+**Setting:** A large, grand medieval dungeon chamber (30x30 units) with a high ceiling (7 units).
+**Atmosphere:** Dark, grand, and imposing, with dramatic shadows and a "Game of Thrones" feel.
 
 **Key Components:**
 
 - **Walls & Floor:** Procedurally generated stone textures with a block/tile pattern, weathering, and hints of moss. They cast and receive shadows.
-- **Ceiling:** A dark, textured ceiling with procedural wooden beams to create an enclosed, intimate feeling.
+- **Ceiling:** A dark, textured ceiling with large, 3D wooden beams spanning the room, creating an epic, cavernous feel.
+- **Architecture:** Four massive, round stone pillars support the ceiling, adding to the sense of scale and providing environmental obstacles.
 - **Lighting:**
-  - **Primary Source:** Four wall-mounted, procedurally generated torches.
-  - **Light Quality:** The torches cast a bright, warm, fiery orange light (`0xff4400`) and create dynamic, flickering shadows.
+  - **Primary Source:** Eight wall-mounted, procedurally generated torches strategically placed to illuminate the vast space.
+  - **Light Quality:** The torches cast a bright, warm, fiery orange light (`0xff4400`) and create dynamic, flickering shadows that play off the pillars and walls.
   - **Ambient Light:** A very warm, bright ambient light (`0x664433`) fills the space to ensure visibility while maintaining a dark, moody feel.
-  - **Accent Light:** A golden glow emanates from the puzzle key to draw the player's attention.
-- **Key Object:** A procedurally generated **Ornate Floating Key**. It is golden with a central red gem and animates with a gentle bobbing and rotation.
+  - **Accent Light:** A golden glow emanates from the puzzle key to draw the player's attention in the large room.
+- **Key Object:** A procedurally generated **Ornate FloatingKey**. It is golden with a central red gem and animates with a gentle bobbing and rotation, placed in a far corner of the chamber.
 - **Puzzle Trigger:** Walking up to the key.
 - **The Riddle:** A crossword-style UI appears, asking for a 7-letter word. The riddle text poetically hints at the "Repentance" event.
   - **Answer:** `REPENNY`
@@ -84,7 +85,7 @@ The first level introduces the core mechanics in an atmospheric setting.
 
 - **Controls:** Top-left corner, displays movement/camera instructions.
 - **Game State:** Tracks `Puzzle`, `Key`, and `Door` status (e.g., "unsolved", "solved", "closed", "open").
-- **Quest Log:** A simple, dynamic quest objective to guide the player (e.g., "Approach the golden key to begin your trial").
+- **Quest Log:** A simple, dynamic quest objective to guide the player (e.g., "Find and solve the riddle of the golden key").
 
 **Puzzle Interface:**
 
@@ -111,8 +112,8 @@ The first level introduces the core mechanics in an atmospheric setting.
 ## 8. Future Development Roadmap
 
 - **Interactive Objects:** Add kinky dungeon props and personalized easter eggs to the first chamber to enhance exploration and storytelling.
-- **Progression System:** Build the framework for a multi-chamber maze, allowing for a sequence of puzzles.
 - **Sound Design:**
-  - **SFX:** Footsteps, torch crackling, key collection chime, door grinding open.
-  - **Ambiance:** Low, ambient dungeon sounds.
+  - **SFX:** Footsteps (with reverb for the large chamber), torch crackling, key collection chime, door grinding open.
+  - **Ambiance:** Low, ambient dungeon sounds with echoes.
 - **Particle Effects:** Add magical sparkles to the key, smoke/embers from torches, and dust effects.
+- **Second Chamber:** Fully design and implement the next puzzle chamber.

@@ -146,30 +146,50 @@ export default function Game() {
     mainLight.shadow.mapSize.width = 2048;
     mainLight.shadow.mapSize.height = 2048;
     mainLight.shadow.camera.near = 0.5;
-    mainLight.shadow.camera.far = 20;
-    mainLight.shadow.camera.left = -10;
-    mainLight.shadow.camera.right = 10;
-    mainLight.shadow.camera.top = 10;
-    mainLight.shadow.camera.bottom = -10;
+    mainLight.shadow.camera.far = 40;
+    mainLight.shadow.camera.left = -20;
+    mainLight.shadow.camera.right = 20;
+    mainLight.shadow.camera.top = 20;
+    mainLight.shadow.camera.bottom = -20;
     mainLight.shadow.bias = -0.0001;
     scene.add(mainLight);
 
-    // Wall torches with flickering lights - positioned for smaller room
+    // Wall torches with flickering lights - positioned for larger room
     const torchPositions = [
+      // Entrance wall (positive Z)
       {
-        pos: new THREE.Vector3(-6.5, 2.2, -6),
+        pos: new THREE.Vector3(-6, 3.5, 14.5),
+        rot: new THREE.Euler(0, 0, 0),
+      },
+      {
+        pos: new THREE.Vector3(6, 3.5, 14.5),
+        rot: new THREE.Euler(0, 0, 0),
+      },
+      // Far wall (negative Z)
+      {
+        pos: new THREE.Vector3(-10, 3.5, -14.5),
+        rot: new THREE.Euler(0, Math.PI, 0),
+      },
+      {
+        pos: new THREE.Vector3(10, 3.5, -14.5),
+        rot: new THREE.Euler(0, Math.PI, 0),
+      },
+      // Left wall (negative X)
+      {
+        pos: new THREE.Vector3(-14.5, 3.5, -5),
         rot: new THREE.Euler(0, Math.PI / 2, 0),
       },
       {
-        pos: new THREE.Vector3(6.5, 2.2, -6),
+        pos: new THREE.Vector3(-14.5, 3.5, 5),
+        rot: new THREE.Euler(0, Math.PI / 2, 0),
+      },
+      // Right wall (positive X)
+      {
+        pos: new THREE.Vector3(14.5, 3.5, -5),
         rot: new THREE.Euler(0, -Math.PI / 2, 0),
       },
       {
-        pos: new THREE.Vector3(-6.5, 2.2, 6),
-        rot: new THREE.Euler(0, Math.PI / 2, 0),
-      },
-      {
-        pos: new THREE.Vector3(6.5, 2.2, 6),
+        pos: new THREE.Vector3(14.5, 3.5, 5),
         rot: new THREE.Euler(0, -Math.PI / 2, 0),
       },
     ];
@@ -200,12 +220,12 @@ export default function Game() {
     });
 
     // Magical key light (more subtle now)
-    const keyLight = new THREE.PointLight(0xffd700, 0.8, 3);
-    keyLight.position.set(4, 1, 0);
+    const keyLight = new THREE.PointLight(0xffd700, 0.8, 5);
+    keyLight.position.set(10, 1.5, 10);
     scene.add(keyLight);
 
-    // Enhanced floor with cleaner stone texture - smaller intimate space
-    const floorSize = 16;
+    // Enhanced floor with cleaner stone texture - larger grand space
+    const floorSize = 30;
     const floorGeo = new THREE.PlaneGeometry(floorSize, floorSize);
     const floorMat = new THREE.MeshStandardMaterial({
       color: 0x707070, // Even lighter base color
@@ -270,7 +290,7 @@ export default function Game() {
 
     const floorTexture = new THREE.CanvasTexture(canvas);
     floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-    floorTexture.repeat.set(6, 6); // More repetitions for finer detail
+    floorTexture.repeat.set(12, 12); // More repetitions for finer detail
     floorMat.map = floorTexture;
 
     const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -279,7 +299,7 @@ export default function Game() {
     scene.add(floor);
 
     // Walls and chamber with enhanced stone material
-    const wallHeight = 3;
+    const wallHeight = 7;
     const wallThickness = 0.5;
     const roomHalf = floorSize / 2;
     const wallMat = new THREE.MeshStandardMaterial({
@@ -321,7 +341,7 @@ export default function Game() {
 
     const wallTexture = new THREE.CanvasTexture(wallCanvas);
     wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
-    wallTexture.repeat.set(2, 1);
+    wallTexture.repeat.set(8, 2);
     wallMat.map = wallTexture;
     const colliders: AabbCollider[] = [];
     const wallMeshes: THREE.Mesh[] = [];
@@ -357,7 +377,7 @@ export default function Game() {
     );
 
     // Far wall split into two segments to form a doorway at Z = roomHalf - t/2
-    const doorWidth = 3;
+    const doorWidth = 4;
     const sideWidth = (floorSize - doorWidth) / 2;
     const farZ = roomHalf - wallThickness / 2;
     addWall(
@@ -370,6 +390,37 @@ export default function Game() {
       new THREE.Vector3(sideWidth, wallHeight, wallThickness),
       "wall-far-right"
     );
+
+    // Grand stone pillars
+    const pillarRadius = 1;
+    const pillarHeight = wallHeight;
+    const pillarPositions = [
+      new THREE.Vector3(-8, pillarHeight / 2, -8),
+      new THREE.Vector3(8, pillarHeight / 2, -8),
+      new THREE.Vector3(-8, pillarHeight / 2, 8),
+      new THREE.Vector3(8, pillarHeight / 2, 8),
+    ];
+
+    pillarPositions.forEach((pos, i) => {
+      const pillarGeo = new THREE.CylinderGeometry(
+        pillarRadius,
+        pillarRadius,
+        pillarHeight,
+        16
+      );
+      const pillar = new THREE.Mesh(pillarGeo, wallMat);
+      pillar.position.copy(pos);
+      pillar.castShadow = true;
+      pillar.receiveShadow = true;
+      scene.add(pillar);
+      wallMeshes.push(pillar);
+      colliders.push({
+        id: `pillar-${i}`,
+        box: makeAabb(pos, new THREE.Vector3(2, pillarHeight, 2)),
+        mesh: pillar,
+        active: true,
+      });
+    });
 
     // Medieval door initially closed in the doorway
     const doorSize = new THREE.Vector3(doorWidth, wallHeight, wallThickness);
@@ -427,7 +478,7 @@ export default function Game() {
 
     const ceilingTexture = new THREE.CanvasTexture(ceilingCanvas);
     ceilingTexture.wrapS = ceilingTexture.wrapT = THREE.RepeatWrapping;
-    ceilingTexture.repeat.set(3, 3);
+    ceilingTexture.repeat.set(6, 6);
     ceilingMat.map = ceilingTexture;
 
     const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
@@ -436,8 +487,28 @@ export default function Game() {
     ceiling.receiveShadow = true;
     scene.add(ceiling);
 
+    // Large wooden ceiling beams
+    const beamMaterial = new THREE.MeshStandardMaterial({
+      color: 0x3d2b1f, // Dark wood color
+      roughness: 0.9,
+      metalness: 0.1,
+    });
+    const beamSize = new THREE.Vector3(0.5, 0.8, floorSize);
+    for (let x = -10; x <= 10; x += 10) {
+      if (x === 0) continue;
+      const beam = new THREE.Mesh(
+        new THREE.BoxGeometry(beamSize.x, beamSize.y, beamSize.z),
+        beamMaterial
+      );
+      beam.position.set(x, wallHeight - beamSize.y / 2, 0);
+      beam.castShadow = true;
+      beam.receiveShadow = true;
+      scene.add(beam);
+      wallMeshes.push(beam); // Add to dispose list
+    }
+
     // Second chamber walls beyond the door (simple short chamber)
-    const chamberDepth = 8;
+    const chamberDepth = 12;
     addWall(
       new THREE.Vector3(0, wallHeight / 2, farZ + chamberDepth),
       new THREE.Vector3(floorSize, wallHeight, wallThickness),
@@ -464,8 +535,8 @@ export default function Game() {
 
     // Key (puzzle item) in the first room - ornate floating key
     const keyMesh = createOrnateKeyGeometry();
-    keyMesh.position.set(4, 0.6, 0);
-    keyMesh.scale.setScalar(0.8); // Scale it appropriately for the scene
+    keyMesh.position.set(10, 1.2, 10);
+    keyMesh.scale.setScalar(1.2); // Scale it appropriately for the scene
     scene.add(keyMesh);
 
     // Player
@@ -474,7 +545,7 @@ export default function Game() {
     const playerRadius = 0.45;
     const playerHeight = 1.7;
     const playerY = playerRadius + 0.1; // keep above floor
-    playerGroup.position.set(0, playerY, -4);
+    playerGroup.position.set(0, playerY, 8);
 
     // Character animation system
     let mixer: THREE.AnimationMixer | null = null;
@@ -566,7 +637,7 @@ export default function Game() {
     const maxPitch = THREE.MathUtils.degToRad(75);
     const moveSpeed = 4.2; // m/s
     const turnSensitivity = 0.0025;
-    const cameraOffset = new THREE.Vector3(0, 1.2, 3.5); // third-person offset (relative to player, rotated by yaw)
+    const cameraOffset = new THREE.Vector3(0, 1.6, 4.5); // third-person offset (relative to player, rotated by yaw)
 
     function onKeyDown(e: KeyboardEvent) {
       switch (e.code) {
@@ -752,7 +823,7 @@ export default function Game() {
         // Continue key animation until puzzle is solved
         keyMesh.rotation.y += delta * 1.0;
         keyMesh.rotation.z = Math.sin(Date.now() * 0.002) * 0.1;
-        keyMesh.position.y = 0.6 + Math.sin(Date.now() * 0.003) * 0.1;
+        keyMesh.position.y = 1.2 + Math.sin(Date.now() * 0.003) * 0.15;
       } else if (!gameState.keyCollected) {
         // Puzzle solved - collect the key
         gameState.keyCollected = true;
@@ -906,7 +977,7 @@ export default function Game() {
         {!puzzleSolved && (
           <div className="rounded bg-amber-600/80 px-3 py-2 text-xs sm:text-sm">
             <div className="font-semibold">Quest:</div>
-            <div>Approach the golden key to begin your trial</div>
+            <div>Find and solve the riddle of the golden key</div>
           </div>
         )}
       </div>
