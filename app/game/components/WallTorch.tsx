@@ -66,22 +66,29 @@ export function createWallTorchGeometry(): THREE.Group {
   torchGroup.add(glow);
 
   // Store flame references for animation
-  (torchGroup as THREE.Group & { flame?: THREE.Mesh; glow?: THREE.Mesh }).flame = flame;
-  (torchGroup as THREE.Group & { flame?: THREE.Mesh; glow?: THREE.Mesh }).glow = glow;
+  (
+    torchGroup as THREE.Group & { flame?: THREE.Mesh; glow?: THREE.Mesh }
+  ).flame = flame;
+  (torchGroup as THREE.Group & { flame?: THREE.Mesh; glow?: THREE.Mesh }).glow =
+    glow;
 
   return torchGroup;
 }
 
 export function animateTorch(torchGroup: THREE.Group, time: number) {
-  const flame = (torchGroup as THREE.Group & { flame?: THREE.Mesh; glow?: THREE.Mesh }).flame;
-  const glow = (torchGroup as THREE.Group & { flame?: THREE.Mesh; glow?: THREE.Mesh }).glow;
-  
+  const flame = (
+    torchGroup as THREE.Group & { flame?: THREE.Mesh; glow?: THREE.Mesh }
+  ).flame;
+  const glow = (
+    torchGroup as THREE.Group & { flame?: THREE.Mesh; glow?: THREE.Mesh }
+  ).glow;
+
   if (flame && glow) {
     // Flickering animation
     const flicker = Math.sin(time * 8) * 0.1 + Math.sin(time * 12) * 0.05;
     flame.scale.y = 1 + flicker;
     glow.scale.y = 1 + flicker * 0.8;
-    
+
     // Subtle swaying
     const sway = Math.sin(time * 3) * 0.05;
     flame.rotation.z = sway;
@@ -100,7 +107,7 @@ export function useWallTorch(
   torchGroup.position.copy(position);
   if (rotation) torchGroup.rotation.copy(rotation);
   torchGroup.scale.setScalar(scale);
-  
+
   scene.add(torchGroup);
 
   const cleanup = () => {

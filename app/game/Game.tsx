@@ -150,10 +150,22 @@ export default function Game() {
 
     // Wall torches with flickering lights
     const torchPositions = [
-      { pos: new THREE.Vector3(-10, 2, -8), rot: new THREE.Euler(0, Math.PI / 2, 0) },
-      { pos: new THREE.Vector3(10, 2, -8), rot: new THREE.Euler(0, -Math.PI / 2, 0) },
-      { pos: new THREE.Vector3(-10, 2, 8), rot: new THREE.Euler(0, Math.PI / 2, 0) },
-      { pos: new THREE.Vector3(10, 2, 8), rot: new THREE.Euler(0, -Math.PI / 2, 0) },
+      {
+        pos: new THREE.Vector3(-10, 2, -8),
+        rot: new THREE.Euler(0, Math.PI / 2, 0),
+      },
+      {
+        pos: new THREE.Vector3(10, 2, -8),
+        rot: new THREE.Euler(0, -Math.PI / 2, 0),
+      },
+      {
+        pos: new THREE.Vector3(-10, 2, 8),
+        rot: new THREE.Euler(0, Math.PI / 2, 0),
+      },
+      {
+        pos: new THREE.Vector3(10, 2, 8),
+        rot: new THREE.Euler(0, -Math.PI / 2, 0),
+      },
     ];
 
     const torches: THREE.Group[] = [];
@@ -350,17 +362,17 @@ export default function Game() {
       roughness: 0.9,
       metalness: 0.1,
     });
-    
+
     // Add stone ceiling texture
     const ceilingCanvas = document.createElement("canvas");
     ceilingCanvas.width = 512;
     ceilingCanvas.height = 512;
     const ceilingCtx = ceilingCanvas.getContext("2d")!;
-    
+
     // Dark stone ceiling
     ceilingCtx.fillStyle = "#2a2a2a";
     ceilingCtx.fillRect(0, 0, 512, 512);
-    
+
     // Add ceiling beams/supports
     ceilingCtx.strokeStyle = "#1a1a1a";
     ceilingCtx.lineWidth = 8;
@@ -370,7 +382,7 @@ export default function Game() {
       ceilingCtx.lineTo(i, 512);
       ceilingCtx.stroke();
     }
-    
+
     // Add some weathering/stains
     for (let i = 0; i < 30; i++) {
       ceilingCtx.fillStyle = "#1f1f1f";
@@ -381,12 +393,12 @@ export default function Game() {
         Math.random() * 40 + 10
       );
     }
-    
+
     const ceilingTexture = new THREE.CanvasTexture(ceilingCanvas);
     ceilingTexture.wrapS = ceilingTexture.wrapT = THREE.RepeatWrapping;
     ceilingTexture.repeat.set(3, 3);
     ceilingMat.map = ceilingTexture;
-    
+
     const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
     ceiling.rotation.x = Math.PI / 2; // Face downward
     ceiling.position.y = wallHeight;
@@ -612,10 +624,11 @@ export default function Game() {
       const time = Date.now() * 0.001;
       torches.forEach((torch, index) => {
         animateTorch(torch, time + index * 0.5); // Offset each torch slightly
-        
+
         // Flicker torch lights
         const baseIntensity = 1.2;
-        const flicker = Math.sin(time * 8 + index) * 0.3 + Math.sin(time * 12 + index) * 0.2;
+        const flicker =
+          Math.sin(time * 8 + index) * 0.3 + Math.sin(time * 12 + index) * 0.2;
         torchLights[index].intensity = baseIntensity + flicker;
       });
 
