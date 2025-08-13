@@ -6,6 +6,7 @@ import {
   GLTFLoader,
   type GLTF,
 } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { createOrnateKeyGeometry } from "./components/OrnateFloatingKey";
 
 type InputState = {
   forward: boolean;
@@ -242,15 +243,10 @@ export default function Game() {
       "chamber-right"
     );
 
-    // Key (puzzle item) in the first room
-    const keyGeo = new THREE.IcosahedronGeometry(0.3, 1);
-    const keyMat = new THREE.MeshStandardMaterial({
-      color: 0xffd54a,
-      emissive: 0x332200,
-      emissiveIntensity: 0.4,
-    });
-    const keyMesh = new THREE.Mesh(keyGeo, keyMat);
+    // Key (puzzle item) in the first room - ornate floating key
+    const keyMesh = createOrnateKeyGeometry();
     keyMesh.position.set(4, 0.6, 0);
+    keyMesh.scale.setScalar(0.8); // Scale it appropriately for the scene
     scene.add(keyMesh);
 
     // Player
@@ -442,8 +438,10 @@ export default function Game() {
           keyMesh.visible = false;
           setKeyCollected(true); // Update React state for UI
         } else {
-          // idle spin
+          // Ornate key floating animation
           keyMesh.rotation.y += delta * 1.0;
+          keyMesh.rotation.z = Math.sin(Date.now() * 0.002) * 0.1;
+          keyMesh.position.y = 0.6 + Math.sin(Date.now() * 0.003) * 0.1;
         }
       }
 
@@ -489,7 +487,7 @@ export default function Game() {
       renderer.dispose();
       container.removeChild(renderer.domElement);
       // dispose geometries/materials
-      [floor, ...wallMeshes, doorMesh, keyMesh].forEach((m) => {
+      [floor, ...wallMeshes, doorMesh].forEach((m) => {
         if (!m) return;
         if (m.geometry) m.geometry.dispose();
         const material = m.material as THREE.Material | THREE.Material[];
@@ -501,6 +499,25 @@ export default function Game() {
           }
         }
       });
+
+      // Dispose ornate key group
+      if (keyMesh) {
+        keyMesh.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+              const material = child.material as
+                | THREE.Material
+                | THREE.Material[];
+              if (Array.isArray(material)) {
+                material.forEach((mat) => mat.dispose());
+              } else {
+                material.dispose();
+              }
+            }
+          }
+        });
+      }
     };
   }, []);
 
