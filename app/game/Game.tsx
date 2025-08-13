@@ -8,6 +8,7 @@ import {
 } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { createOrnateKeyGeometry } from "./components/OrnateFloatingKey";
 import { createMedievalDoorGeometry } from "./components/MedievalDoor";
+import { createWallTorchGeometry, animateTorch } from "./components/WallTorch";
 
 type InputState = {
   forward: boolean;
@@ -118,7 +119,7 @@ export default function Game() {
 
     // Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x101114);
+    scene.background = new THREE.Color(0x0a0505); // Dark reddish dungeon atmosphere
 
     // Camera
     const camera = new THREE.PerspectiveCamera(
@@ -129,40 +130,53 @@ export default function Game() {
     );
     camera.position.set(0, 1.6, 4);
 
-    // Enhanced lighting system
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.3); // Dim ambient
+    // Dungeon lighting system - intimate and moody
+    const ambientLight = new THREE.AmbientLight(0x301010, 0.2); // Very dim reddish ambient
     scene.add(ambientLight);
 
-    // Main directional light (sunlight/moonlight through windows)
-    const mainLight = new THREE.DirectionalLight(0xffeaa7, 1.2);
-    mainLight.position.set(8, 12, 6);
+    // Main dramatic light (single overhead source)
+    const mainLight = new THREE.DirectionalLight(0xff8844, 0.8);
+    mainLight.position.set(0, 8, 2);
     mainLight.castShadow = true;
     mainLight.shadow.mapSize.width = 2048;
     mainLight.shadow.mapSize.height = 2048;
     mainLight.shadow.camera.near = 0.5;
-    mainLight.shadow.camera.far = 50;
+    mainLight.shadow.camera.far = 20;
     mainLight.shadow.camera.left = -15;
     mainLight.shadow.camera.right = 15;
     mainLight.shadow.camera.top = 15;
     mainLight.shadow.camera.bottom = -15;
     scene.add(mainLight);
 
-    // Warm fill light from opposite direction
-    const fillLight = new THREE.DirectionalLight(0xff7675, 0.4);
-    fillLight.position.set(-3, 8, -4);
-    scene.add(fillLight);
+    // Wall torches with flickering lights
+    const torchPositions = [
+      { pos: new THREE.Vector3(-10, 2, -8), rot: new THREE.Euler(0, Math.PI / 2, 0) },
+      { pos: new THREE.Vector3(10, 2, -8), rot: new THREE.Euler(0, -Math.PI / 2, 0) },
+      { pos: new THREE.Vector3(-10, 2, 8), rot: new THREE.Euler(0, Math.PI / 2, 0) },
+      { pos: new THREE.Vector3(10, 2, 8), rot: new THREE.Euler(0, -Math.PI / 2, 0) },
+    ];
 
-    // Point lights for atmospheric lighting
-    const torchLight1 = new THREE.PointLight(0xffa500, 0.8, 8);
-    torchLight1.position.set(-8, 2, 0);
-    scene.add(torchLight1);
+    const torches: THREE.Group[] = [];
+    const torchLights: THREE.PointLight[] = [];
 
-    const torchLight2 = new THREE.PointLight(0xffa500, 0.8, 8);
-    torchLight2.position.set(8, 2, 0);
-    scene.add(torchLight2);
+    torchPositions.forEach((torch) => {
+      // Create torch geometry
+      const torchGroup = createWallTorchGeometry();
+      torchGroup.position.copy(torch.pos);
+      torchGroup.rotation.copy(torch.rot);
+      scene.add(torchGroup);
+      torches.push(torchGroup);
 
-    // Magical key light
-    const keyLight = new THREE.PointLight(0xffd700, 0.6, 4);
+      // Add flickering point light for each torch
+      const torchLight = new THREE.PointLight(0xff4500, 1.2, 6);
+      torchLight.position.copy(torch.pos);
+      torchLight.position.x += torch.rot.y > 0 ? 0.5 : -0.5; // Offset from wall
+      scene.add(torchLight);
+      torchLights.push(torchLight);
+    });
+
+    // Magical key light (more subtle now)
+    const keyLight = new THREE.PointLight(0xffd700, 0.8, 3);
     keyLight.position.set(4, 1, 0);
     scene.add(keyLight);
 
@@ -328,6 +342,56 @@ export default function Game() {
       active: true,
     };
     colliders.push(doorCollider);
+
+    // Dungeon ceiling - creates intimate enclosed feeling
+    const ceilingGeo = new THREE.PlaneGeometry(floorSize, floorSize);
+    const ceilingMat = new THREE.MeshStandardMaterial({
+      color: 0x2a2a2a,
+      roughness: 0.9,
+      metalness: 0.1,
+    });
+    
+    // Add stone ceiling texture
+    const ceilingCanvas = document.createElement("canvas");
+    ceilingCanvas.width = 512;
+    ceilingCanvas.height = 512;
+    const ceilingCtx = ceilingCanvas.getContext("2d")!;
+    
+    // Dark stone ceiling
+    ceilingCtx.fillStyle = "#2a2a2a";
+    ceilingCtx.fillRect(0, 0, 512, 512);
+    
+    // Add ceiling beams/supports
+    ceilingCtx.strokeStyle = "#1a1a1a";
+    ceilingCtx.lineWidth = 8;
+    for (let i = 0; i < 512; i += 128) {
+      ceilingCtx.beginPath();
+      ceilingCtx.moveTo(i, 0);
+      ceilingCtx.lineTo(i, 512);
+      ceilingCtx.stroke();
+    }
+    
+    // Add some weathering/stains
+    for (let i = 0; i < 30; i++) {
+      ceilingCtx.fillStyle = "#1f1f1f";
+      ceilingCtx.fillRect(
+        Math.random() * 512,
+        Math.random() * 512,
+        Math.random() * 40 + 10,
+        Math.random() * 40 + 10
+      );
+    }
+    
+    const ceilingTexture = new THREE.CanvasTexture(ceilingCanvas);
+    ceilingTexture.wrapS = ceilingTexture.wrapT = THREE.RepeatWrapping;
+    ceilingTexture.repeat.set(3, 3);
+    ceilingMat.map = ceilingTexture;
+    
+    const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
+    ceiling.rotation.x = Math.PI / 2; // Face downward
+    ceiling.position.y = wallHeight;
+    ceiling.receiveShadow = true;
+    scene.add(ceiling);
 
     // Second chamber walls beyond the door (simple short chamber)
     const chamberDepth = 8;
@@ -544,6 +608,17 @@ export default function Game() {
         mixer.update(delta);
       }
 
+      // Animate torches
+      const time = Date.now() * 0.001;
+      torches.forEach((torch, index) => {
+        animateTorch(torch, time + index * 0.5); // Offset each torch slightly
+        
+        // Flicker torch lights
+        const baseIntensity = 1.2;
+        const flicker = Math.sin(time * 8 + index) * 0.3 + Math.sin(time * 12 + index) * 0.2;
+        torchLights[index].intensity = baseIntensity + flicker;
+      });
+
       // Movement vector in local (XZ) space
       const dir = new THREE.Vector3(0, 0, 0);
       if (input.forward) dir.z -= 1;
@@ -725,6 +800,25 @@ export default function Game() {
           }
         });
       }
+
+      // Dispose torches
+      torches.forEach((torch) => {
+        torch.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+              const material = child.material as
+                | THREE.Material
+                | THREE.Material[];
+              if (Array.isArray(material)) {
+                material.forEach((mat) => mat.dispose());
+              } else {
+                material.dispose();
+              }
+            }
+          }
+        });
+      });
     };
   }, []);
 
