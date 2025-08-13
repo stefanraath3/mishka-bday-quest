@@ -9,6 +9,7 @@ import {
 import { createOrnateKeyGeometry } from "./components/OrnateFloatingKey";
 import { createMedievalDoorGeometry } from "./components/MedievalDoor";
 import { createWallTorchGeometry, animateTorch } from "./components/WallTorch";
+import CrosswordPuzzle from "./components/CrosswordPuzzle";
 
 type InputState = {
   forward: boolean;
@@ -93,16 +94,20 @@ function resolveSphereAabb(
 
 export default function Game() {
   const mountRef = useRef<HTMLDivElement | null>(null);
+  const gameStateRef = useRef({
+    keyCollected: false,
+    doorOpen: false,
+    puzzleSolved: false,
+  });
   const [keyCollected, setKeyCollected] = useState(false);
   const [doorOpen, setDoorOpen] = useState(false);
   const [pointerLocked, setPointerLocked] = useState(false);
+  const [showCrossword, setShowCrossword] = useState(false);
+  const [puzzleSolved, setPuzzleSolved] = useState(false);
 
   useEffect(() => {
-    // Game state refs (for use inside animation loop)
-    const gameState = {
-      keyCollected: false,
-      doorOpen: false,
-    };
+    // Use the ref for game state
+    const gameState = gameStateRef.current;
     const container = mountRef.current;
     if (!container) return;
 
@@ -732,19 +737,27 @@ export default function Game() {
         playerGroup.position.z
       );
 
-      // Key pickup
-      if (!gameState.keyCollected) {
+      // Key interaction - triggers crossword puzzle
+      if (!gameState.puzzleSolved) {
         const distToKey = playerGroup.position.distanceTo(keyMesh.position);
-        if (distToKey < 1.0) {
-          gameState.keyCollected = true;
-          keyMesh.visible = false;
-          setKeyCollected(true); // Update React state for UI
-        } else {
-          // Ornate key floating animation
-          keyMesh.rotation.y += delta * 1.0;
-          keyMesh.rotation.z = Math.sin(Date.now() * 0.002) * 0.1;
-          keyMesh.position.y = 0.6 + Math.sin(Date.now() * 0.003) * 0.1;
+        if (distToKey < 1.0 && !showCrossword) {
+          // Show crossword puzzle instead of immediately collecting key
+          setShowCrossword(true);
+          // Pause pointer lock when puzzle opens
+          if (document.pointerLockElement) {
+            document.exitPointerLock();
+          }
         }
+
+        // Continue key animation until puzzle is solved
+        keyMesh.rotation.y += delta * 1.0;
+        keyMesh.rotation.z = Math.sin(Date.now() * 0.002) * 0.1;
+        keyMesh.position.y = 0.6 + Math.sin(Date.now() * 0.003) * 0.1;
+      } else if (!gameState.keyCollected) {
+        // Puzzle solved - collect the key
+        gameState.keyCollected = true;
+        keyMesh.visible = false;
+        setKeyCollected(true);
       }
 
       // Open door if key collected
@@ -859,24 +872,51 @@ export default function Game() {
         });
       });
     };
-  }, []);
+  }, [showCrossword]);
+
+  const handlePuzzleSolved = () => {
+    setPuzzleSolved(true);
+    setShowCrossword(false);
+    // Update game state ref
+    gameStateRef.current.puzzleSolved = true;
+  };
+
+  const handleCloseCrossword = () => {
+    setShowCrossword(false);
+  };
 
   return (
     <div className="relative w-full h-[100svh] select-none">
       <div ref={mountRef} className="absolute inset-0" />
+
+      {/* Game UI */}
       <div className="pointer-events-none absolute left-4 top-4 z-10 space-y-2 text-white/90">
         <div className="rounded bg-black/40 px-3 py-2 text-xs sm:text-sm">
           <div className="font-semibold">Controls</div>
           <div>Click to lock mouse • WASD to move</div>
         </div>
         <div className="rounded bg-black/40 px-3 py-2 text-xs sm:text-sm">
-          <div>Key: {keyCollected ? "collected ✓" : "not collected"}</div>
+          <div>Puzzle: {puzzleSolved ? "solved ✓" : "unsolved"}</div>
+          <div>Key: {keyCollected ? "collected ✓" : "find the key"}</div>
           <div>Door: {doorOpen ? "open" : "closed"}</div>
-          {!pointerLocked && (
+          {!pointerLocked && !showCrossword && (
             <div className="opacity-80">Click the scene to start</div>
           )}
         </div>
+        {!puzzleSolved && (
+          <div className="rounded bg-amber-600/80 px-3 py-2 text-xs sm:text-sm">
+            <div className="font-semibold">Quest:</div>
+            <div>Approach the golden key to begin your trial</div>
+          </div>
+        )}
       </div>
+
+      {/* Crossword Puzzle Modal */}
+      <CrosswordPuzzle
+        isVisible={showCrossword}
+        onSolved={handlePuzzleSolved}
+        onClose={handleCloseCrossword}
+      />
     </div>
   );
 }
