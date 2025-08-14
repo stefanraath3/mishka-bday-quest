@@ -119,12 +119,12 @@ export default function Game() {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.56; // Increased by 30% from 1.2
+    renderer.toneMappingExposure = 2.1; // Increased for better overall visibility
     container.appendChild(renderer.domElement);
 
     // Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000); // Pitch black background
+    scene.background = new THREE.Color(0x0a0a0a); // Very dark grey background for better contrast
 
     // Camera
     const camera = new THREE.PerspectiveCamera(
@@ -136,11 +136,11 @@ export default function Game() {
     camera.position.set(0, 1.6, 4);
 
     // Dramatic, localized lighting system
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.25); // Slightly brighter ambient
+    const ambientLight = new THREE.AmbientLight(0x606060, 0.4); // Brighter ambient for better visibility
     scene.add(ambientLight);
 
     // Dim overhead light - just enough to give shape, no shadows
-    const mainLight = new THREE.DirectionalLight(0xffffff, 0.15); // Slightly brighter
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.3); // Increased for better visibility
     mainLight.position.set(0, 10, 5);
     mainLight.castShadow = false; // Turn off shadows for the main light
     scene.add(mainLight);
@@ -198,7 +198,7 @@ export default function Game() {
       torches.push(torchGroup);
 
       // Add bright, fiery point light for each torch
-      const torchLight = new THREE.PointLight(0xff6600, 22, 22); // Brighter, larger radius
+      const torchLight = new THREE.PointLight(0xff8844, 25, 25); // Less orange, brighter for better illumination
       torchLight.position.copy(torch.pos);
       const lightOffset = 0.8; // How far the light is from the wall
       if (torch.rot.y === 0) torchLight.position.z -= lightOffset;
@@ -225,7 +225,7 @@ export default function Game() {
     const floorSize = 30;
     const floorGeo = new THREE.PlaneGeometry(floorSize, floorSize);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x4a4a4a, // Darker stone grey
+      color: 0x6a6a6a, // Lighter stone grey for better visibility
       roughness: 0.8,
       metalness: 0.1,
     });
@@ -236,8 +236,8 @@ export default function Game() {
     canvas.height = 512;
     const ctx = canvas.getContext("2d")!;
 
-    // Base stone color - dark grey
-    ctx.fillStyle = "#4a4a4a";
+    // Base stone color - lighter grey
+    ctx.fillStyle = "#6a6a6a";
     ctx.fillRect(0, 0, 512, 512);
 
     // Add large stone tiles (8x8 grid)
@@ -304,7 +304,7 @@ export default function Game() {
     const wallThickness = 0.5;
     const roomHalf = floorSize / 2;
     const wallMat = new THREE.MeshStandardMaterial({
-      color: 0x5a5a5a, // Darker grey walls
+      color: 0x7a7a7a, // Lighter grey walls for better visibility
       roughness: 0.85,
       metalness: 0.1,
     });
@@ -316,7 +316,7 @@ export default function Game() {
     const wallCtx = wallCanvas.getContext("2d")!;
 
     // Base stone color
-    wallCtx.fillStyle = "#4a4a4a";
+    wallCtx.fillStyle = "#7a7a7a";
     wallCtx.fillRect(0, 0, 512, 512);
 
     // Add stone block pattern
@@ -444,7 +444,7 @@ export default function Game() {
     // Dungeon ceiling - creates intimate enclosed feeling
     const ceilingGeo = new THREE.PlaneGeometry(floorSize, floorSize);
     const ceilingMat = new THREE.MeshStandardMaterial({
-      color: 0x2a2a2a,
+      color: 0x4a4a4a, // Lighter ceiling for better contrast
       roughness: 0.9,
       metalness: 0.1,
     });
@@ -455,8 +455,8 @@ export default function Game() {
     ceilingCanvas.height = 512;
     const ceilingCtx = ceilingCanvas.getContext("2d")!;
 
-    // Dark stone ceiling
-    ceilingCtx.fillStyle = "#2a2a2a";
+    // Stone ceiling
+    ceilingCtx.fillStyle = "#4a4a4a";
     ceilingCtx.fillRect(0, 0, 512, 512);
 
     // Add ceiling beams/supports
@@ -732,9 +732,9 @@ export default function Game() {
         animateTorch(torch, time + index * 0.5); // Offset each torch slightly
 
         // Flicker torch lights (bright and fiery)
-        const baseIntensity = 22.0;
+        const baseIntensity = 25.0;
         const flicker =
-          Math.sin(time * 10 + index) * 3.5 + Math.sin(time * 18 + index) * 2;
+          Math.sin(time * 10 + index) * 4.0 + Math.sin(time * 18 + index) * 2.5;
         torchLights[index].intensity = baseIntensity + flicker;
       });
 

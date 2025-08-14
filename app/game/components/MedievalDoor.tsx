@@ -7,26 +7,26 @@ export function createMedievalDoorGeometry(): THREE.Group {
 
   // Materials
   const woodMaterial = new THREE.MeshStandardMaterial({
-    color: 0x8b4513, // Saddle brown
+    color: 0xab6533, // Lighter saddle brown for better visibility
     roughness: 0.8,
     metalness: 0.1,
     normalScale: new THREE.Vector2(0.5, 0.5),
   });
 
   const darkWoodMaterial = new THREE.MeshStandardMaterial({
-    color: 0x654321, // Dark brown
+    color: 0x856341, // Lighter dark brown for better contrast
     roughness: 0.9,
     metalness: 0.05,
   });
 
   const ironMaterial = new THREE.MeshStandardMaterial({
-    color: 0x2f2f2f, // Dark gray/iron
+    color: 0x5f5f5f, // Lighter gray/iron for better visibility
     roughness: 0.4,
     metalness: 0.9,
   });
 
   const rustIronMaterial = new THREE.MeshStandardMaterial({
-    color: 0x8b4513, // Rusty brown
+    color: 0xab6533, // Lighter rusty brown for better contrast
     roughness: 0.6,
     metalness: 0.7,
   });

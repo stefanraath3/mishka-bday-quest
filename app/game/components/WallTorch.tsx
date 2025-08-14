@@ -7,13 +7,13 @@ export function createWallTorchGeometry(): THREE.Group {
 
   // Materials
   const ironMaterial = new THREE.MeshStandardMaterial({
-    color: 0x2f2f2f,
+    color: 0x4f4f4f, // Lighter iron for better visibility
     roughness: 0.8,
     metalness: 0.9,
   });
 
   const woodMaterial = new THREE.MeshStandardMaterial({
-    color: 0x4a3728,
+    color: 0x6a5748, // Lighter wood for better visibility
     roughness: 0.9,
     metalness: 0.1,
   });
