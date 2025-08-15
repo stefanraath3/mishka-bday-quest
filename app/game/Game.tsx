@@ -10,7 +10,6 @@ import { createOrnateKeyGeometry } from "./components/OrnateFloatingKey";
 import { createMedievalDoorGeometry } from "./components/MedievalDoor";
 import { createWallTorchGeometry, animateTorch } from "./components/WallTorch";
 import AncientScroll from "./components/AncientScroll";
-import sound from "@/lib/sound";
 
 type InputState = {
   forward: boolean;
@@ -111,9 +110,6 @@ export default function Game() {
     const gameState = gameStateRef.current;
     const container = mountRef.current;
     if (!container) return;
-
-    // Initialize audio system
-    sound.init();
 
     // Renderer with shadows enabled
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -218,8 +214,6 @@ export default function Game() {
       torchLight.shadow.bias = -0.005; // Adjusted bias for point light shadows
       scene.add(torchLight);
       torchLights.push(torchLight);
-      // Audio: positional torch crackle
-      sound.createTorchAt(torchLight.position, 0.22);
     });
 
     // Magical key light (more subtle now)
@@ -700,8 +694,6 @@ export default function Game() {
 
     function requestLock() {
       renderer.domElement.requestPointerLock();
-      // User gesture: resume audio and start ambient if not started
-      sound.resumeAudioContext();
     }
     function onPointerLockChange() {
       const locked = document.pointerLockElement === renderer.domElement;
@@ -727,9 +719,6 @@ export default function Game() {
     // Animation loop
     const clock = new THREE.Clock();
     let rafId = 0;
-    let stepTimer = 0;
-    const stepInterval = 0.45; // seconds between footfalls
-    let doorCreakPlayed = false;
 
     function update(delta: number) {
       // Update animation mixer
@@ -823,23 +812,6 @@ export default function Game() {
         playerGroup.position.z
       );
 
-      // Audio: update listener to camera orientation
-      const forward = new THREE.Vector3();
-      camera.getWorldDirection(forward);
-      const up = camera.up.clone().normalize();
-      sound.updateListener(camera.position, forward, up);
-
-      // Audio: footsteps cadence
-      if (shouldWalk) {
-        stepTimer -= delta;
-        if (stepTimer <= 0) {
-          sound.playFootstep();
-          stepTimer = stepInterval;
-        }
-      } else {
-        stepTimer = 0;
-      }
-
       // Key interaction - triggers crossword puzzle
       if (!gameState.puzzleSolved) {
         const distToKey = playerGroup.position.distanceTo(keyMesh.position);
@@ -859,17 +831,12 @@ export default function Game() {
       } else if (!gameState.keyCollected) {
         // Puzzle solved - collect the key
         gameState.keyCollected = true;
-        sound.playKeyChime();
         keyMesh.visible = false;
         setKeyCollected(true);
       }
 
       // Open door if key collected
       if (gameState.keyCollected && !gameState.doorOpen) {
-        if (!doorCreakPlayed) {
-          sound.playDoorCreak();
-          doorCreakPlayed = true;
-        }
         const targetY = wallHeight + 0.1;
         doorMesh.position.y = THREE.MathUtils.damp(
           doorMesh.position.y,
@@ -979,11 +946,8 @@ export default function Game() {
           }
         });
       });
-
-      // Dispose audio
-      sound.disposeAll();
     };
-  }, [showCrossword]);
+  }, []);
 
   const handlePuzzleSolved = () => {
     setPuzzleSolved(true);

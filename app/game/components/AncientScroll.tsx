@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import sound from "@/lib/sound";
 
 interface AncientScrollProps {
   isVisible: boolean;
@@ -25,7 +24,6 @@ export default function AncientScroll({
   useEffect(() => {
     if (currentInput.toUpperCase() === correctAnswer) {
       setIsCorrect(true);
-      sound.playUiCorrect();
       setTimeout(() => {
         onSolved();
       }, 1500);
@@ -44,7 +42,6 @@ export default function AncientScroll({
       if (attempts >= 1) {
         setShowHint(true);
       }
-      sound.playUiWrong();
       // Shake animation for wrong answer
       const grid = document.getElementById("crossword-grid");
       if (grid) {
@@ -90,9 +87,6 @@ export default function AncientScroll({
           relative w-full max-w-lg mx-4 transition-transform duration-700 ease-in-out
           ${isVisible ? "transform-none" : "-translate-y-full"}
         `}
-        onTransitionEnd={() => {
-          if (isVisible) sound.playUiOpen();
-        }}
       >
         {/* Scroll Background */}
         <div
@@ -127,10 +121,7 @@ export default function AncientScroll({
 
             {/* Close button */}
             <button
-              onClick={() => {
-                sound.playUiClose();
-                onClose();
-              }}
+              onClick={onClose}
               className="absolute top-4 right-4 text-amber-800 hover:text-amber-600 text-2xl font-bold"
             >
               ×
