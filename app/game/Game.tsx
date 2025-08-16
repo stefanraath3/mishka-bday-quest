@@ -200,8 +200,10 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       audioInitialized,
       audioEnabled,
       audioManagerDirectly: {
-        initialized: (window as any).audioManager?.initialized,
-        enabled: (window as any).audioManager?.enabled,
+        initialized: (globalThis as { audioManager?: { initialized: boolean } })
+          .audioManager?.initialized,
+        enabled: (globalThis as { audioManager?: { enabled: boolean } })
+          .audioManager?.enabled,
       },
       playSound: typeof playSound,
       playBackgroundMusic: typeof playBackgroundMusic,

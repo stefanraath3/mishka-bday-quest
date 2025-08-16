@@ -125,7 +125,7 @@ export default function DoorLockPuzzle({
         </h2>
 
         <p className="mb-8 text-center text-xl italic text-amber-800">
-          Arrange the words you've collected to reveal the final secret.
+          Arrange the words you&apos;ve collected to reveal the final secret.
         </p>
 
         <div

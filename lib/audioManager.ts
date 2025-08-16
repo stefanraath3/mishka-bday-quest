@@ -367,8 +367,18 @@ export const audioManager = new AudioManager();
 
 // Expose for debugging in browser console
 if (typeof window !== "undefined") {
-  (window as any).audioManager = audioManager;
-  (window as any).testSound = (key: string) => audioManager.debugPlaySound(key);
+  (
+    globalThis as {
+      audioManager?: AudioManager;
+      testSound?: (key: string) => void;
+    }
+  ).audioManager = audioManager;
+  (
+    globalThis as {
+      audioManager?: AudioManager;
+      testSound?: (key: string) => void;
+    }
+  ).testSound = (key: string) => audioManager.debugPlaySound(key);
   console.log("[AudioManager] Debug functions available in console:");
   console.log("  - window.audioManager (full audio manager)");
   console.log("  - window.testSound('soundKey') (test a specific sound)");
