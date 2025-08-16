@@ -9,11 +9,21 @@ import {
 import { createOrnateKeyGeometry } from "./components/OrnateFloatingKey";
 import { createMedievalDoorGeometry } from "./components/MedievalDoor";
 import { createWallTorchGeometry, animateTorch } from "./components/WallTorch";
+import {
+  createPaintingFrameGeometry,
+  animatePaintingFrame,
+} from "./components/PaintingFrame";
 import AncientScroll from "./components/AncientScroll";
 import DoorLockPuzzle from "./components/DoorLockPuzzle";
 import BirthdayMessage from "./components/BirthdayMessage";
+import PhotoViewer from "./components/PhotoViewer";
 import AudioControls from "./components/AudioControls";
 import { useAudio } from "@/lib/useAudio";
+import {
+  memoryPhotos,
+  paintingPositions,
+  getPhotoById,
+} from "./data/memoryPhotos";
 
 const riddles = [
   {
@@ -174,6 +184,10 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   );
   const [showDoorPuzzle, setShowDoorPuzzle] = useState(false);
   const [showBirthdayMessage, setShowBirthdayMessage] = useState(false);
+  const [showPhotoViewer, setShowPhotoViewer] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<
+    import("./components/PaintingFrame").MemoryPhoto | null
+  >(null);
   const [nearbyKey, setNearbyKey] = useState<string | null>(null);
   const nearbyKeyRef = useRef<string | null>(null);
   const lastOpenedRiddleRef = useRef<string | null>(null);
@@ -661,6 +675,23 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
     chestLight.position.y += chestSize / 2; // Position light above the chest
     scene.add(chestLight);
 
+    // Memory paintings on walls
+    const paintingMeshes: { [id: string]: THREE.Group } = {};
+    paintingPositions.forEach((paintingData) => {
+      const photo = getPhotoById(paintingData.photoId);
+      if (photo) {
+        const paintingMesh = createPaintingFrameGeometry(
+          photo,
+          paintingData.scale
+        );
+        paintingMesh.position.copy(paintingData.position);
+        paintingMesh.rotation.copy(paintingData.rotation);
+        paintingMesh.name = photo.id; // Assign name for later lookup
+        scene.add(paintingMesh);
+        paintingMeshes[photo.id] = paintingMesh;
+      }
+    });
+
     // Key (puzzle item) in the first room - ornate floating key
     const keyMeshes: { [id: string]: THREE.Group } = {};
     riddles.forEach((riddleData) => {
@@ -884,6 +915,14 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
                 playSound("chest-open", { volume: 0.8 });
               }
               setShowBirthdayMessage(true);
+            } else if (currentNearbyKey.startsWith("photo-")) {
+              // Open photo viewer
+              const photo = getPhotoById(currentNearbyKey);
+              if (photo) {
+                console.log(`[Game] Opening photo viewer for: ${photo.title}`);
+                setSelectedPhoto(photo);
+                setShowPhotoViewer(true);
+              }
             } else {
               // Open key riddle
               console.log(
@@ -1195,6 +1234,52 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         }
       }
 
+      // Painting interaction - check for nearby paintings
+      for (const photo of memoryPhotos) {
+        const paintingMesh = paintingMeshes[photo.id];
+        if (paintingMesh) {
+          // Calculate horizontal distance (ignore Y difference since paintings are on walls)
+          const playerPos2D = new THREE.Vector2(
+            playerGroup.position.x,
+            playerGroup.position.z
+          );
+          const paintingPos2D = new THREE.Vector2(
+            paintingMesh.position.x,
+            paintingMesh.position.z
+          );
+          const horizontalDistance = playerPos2D.distanceTo(paintingPos2D);
+
+          // Use 3D distance for animation, horizontal distance for interaction
+          const distToPainting = playerGroup.position.distanceTo(
+            paintingMesh.position
+          );
+
+          // Animate painting based on proximity (larger radius for glow effect)
+          const isNear = horizontalDistance < 5.0;
+          animatePaintingFrame(paintingMesh, isNear, time, 1.0);
+
+          // Track closest painting for interaction (much larger radius)
+          if (
+            horizontalDistance < 4.0 &&
+            horizontalDistance < closestDistance
+          ) {
+            closestKey = photo.id;
+            closestDistance = horizontalDistance;
+
+            // Debug logging - let's see the distances
+            if (nearbyKeyRef.current !== photo.id) {
+              console.log(
+                `[Game] Painting in range: ${
+                  photo.title
+                } - horizontal: ${horizontalDistance.toFixed(
+                  2
+                )}, 3D: ${distToPainting.toFixed(2)}`
+              );
+            }
+          }
+        }
+      }
+
       // Door interaction - check if near door with all keys
       let interactTarget = closestKey; // Start with the closest key
       let interactDistance = closestDistance; // Track the distance for comparison
@@ -1396,6 +1481,27 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           }
         });
       }
+
+      // Dispose painting frames
+      Object.values(paintingMeshes).forEach((paintingMesh) => {
+        if (paintingMesh) {
+          paintingMesh.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              if (child.geometry) child.geometry.dispose();
+              if (child.material) {
+                const material = child.material as
+                  | THREE.Material
+                  | THREE.Material[];
+                if (Array.isArray(material)) {
+                  material.forEach((mat) => mat.dispose());
+                } else {
+                  material.dispose();
+                }
+              }
+            }
+          });
+        }
+      });
     };
   }, []);
 
@@ -1509,6 +1615,8 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
                   ? "🚪 Press [E] to unlock the great door"
                   : nearbyKey === "chest"
                   ? "🎁 Press [E] to open the magical chest"
+                  : nearbyKey?.startsWith("photo-")
+                  ? "🖼️ Press [E] to view the memory painting"
                   : "🗝️ Press [E] to examine the golden key"}
               </div>
             )}
@@ -1542,6 +1650,15 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       <BirthdayMessage
         isVisible={showBirthdayMessage}
         onClose={() => setShowBirthdayMessage(false)}
+      />
+
+      <PhotoViewer
+        isVisible={showPhotoViewer}
+        photo={selectedPhoto}
+        onClose={() => {
+          setShowPhotoViewer(false);
+          setSelectedPhoto(null);
+        }}
       />
     </div>
   );
