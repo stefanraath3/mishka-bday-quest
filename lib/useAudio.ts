@@ -73,6 +73,9 @@ export function useAudio() {
         "error-buzz": "wrongAnswer",
         "party-horn": "confetti",
         "magical-sparkle": "magicalSparkle",
+        // Photo-specific sound mappings
+        "camera-shutter": "camera-shutter",
+        "photo-flip": "photo-flip",
       };
 
       const mappedKey = soundMap[soundKey] || soundKey;

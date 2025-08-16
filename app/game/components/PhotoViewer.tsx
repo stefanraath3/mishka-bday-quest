@@ -33,10 +33,10 @@ export default function PhotoViewer({
       // Start content animation after a brief delay
       setTimeout(() => setShowContent(true), 200);
 
-      // Play gentle magical sparkle sound when opening photo
+      // Play gentle camera shutter sound when opening photo viewer
       if (audioInitialized && audioEnabled) {
         console.log(`[PhotoViewer] Opening photo: ${photo.title}`);
-        playSound("magical-sparkle", { volume: 0.5 });
+        playSound("camera-shutter", { volume: 0.4 });
       }
     } else {
       setShowContent(false);
@@ -45,9 +45,9 @@ export default function PhotoViewer({
   }, [isVisible, photo, audioInitialized, audioEnabled, playSound]);
 
   const handleClose = () => {
-    // Play subtle close sound
+    // Play photo flip sound when closing
     if (audioInitialized && audioEnabled) {
-      playSound("parchment-unfurl", { volume: 0.3 });
+      playSound("photo-flip", { volume: 0.6 });
     }
     onClose();
   };
@@ -196,7 +196,7 @@ export default function PhotoViewer({
                     <button
                       onClick={() => {
                         if (audioInitialized && audioEnabled) {
-                          playSound("button-click", { volume: 0.6 });
+                          playSound("camera-shutter", { volume: 0.5 });
                         }
                         // Could add favorite functionality here
                       }}
@@ -207,7 +207,7 @@ export default function PhotoViewer({
                     <button
                       onClick={() => {
                         if (audioInitialized && audioEnabled) {
-                          playSound("magical-sparkle", { volume: 0.4 });
+                          playSound("camera-shutter", { volume: 0.4 });
                         }
                         // Could add share functionality here
                       }}

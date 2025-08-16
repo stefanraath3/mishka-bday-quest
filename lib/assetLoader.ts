@@ -72,6 +72,13 @@ export class AssetLoader {
         "/audio/sfx/magical-sparkle.mp3",
         "/audio/sfx/magical-sparkle.ogg",
       ],
+
+      // Photo interaction sounds
+      "camera-shutter": [
+        "/audio/sfx/camera-shutter.mp3",
+        "/audio/sfx/camera-shutter.ogg",
+      ],
+      "photo-flip": ["/audio/sfx/photo-flip.mp3", "/audio/sfx/photo-flip.ogg"],
     },
     models: {
       character: "/models/character.glb",

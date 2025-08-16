@@ -110,6 +110,18 @@ export class AudioManager {
       volume: this.sfxVolume * 0.8,
       preload: true,
     },
+
+    // Photo interaction sounds
+    "camera-shutter": {
+      src: ["/audio/sfx/camera-shutter.mp3", "/audio/sfx/camera-shutter.ogg"],
+      volume: this.sfxVolume * 0.9,
+      preload: true,
+    },
+    "photo-flip": {
+      src: ["/audio/sfx/photo-flip.mp3", "/audio/sfx/photo-flip.ogg"],
+      volume: this.sfxVolume * 0.7,
+      preload: true,
+    },
   };
 
   constructor() {

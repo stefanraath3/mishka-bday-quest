@@ -920,6 +920,13 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
               const photo = getPhotoById(currentNearbyKey);
               if (photo) {
                 console.log(`[Game] Opening photo viewer for: ${photo.title}`);
+
+                // Play camera shutter sound when opening photo
+                if (audioInitialized && audioEnabled) {
+                  console.log(`[Game] Playing camera-shutter sound for photo`);
+                  playSound("camera-shutter", { volume: 0.8 });
+                }
+
                 setSelectedPhoto(photo);
                 setShowPhotoViewer(true);
               }
