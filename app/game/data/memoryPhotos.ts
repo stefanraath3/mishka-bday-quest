@@ -28,7 +28,7 @@ export const memoryPhotos: MemoryPhoto[] = [
     imagePath: "/images/memories/photo3.jpg",
     title: "Vineyard Adventures & Wine Hacks",
     description:
-      "December 3rd, 2024 at Blaauwklippen Vineyards - chocolate and fudge pairing because we were too late for the pizza lool! The day Garthy's pants got messy and we discovered white wine is actually a great stain remover (it worked!). Mishka's face said everything we need to know about the wine taste hahaha. Great photos, hilarious memories, perfect day.",
+      "December 3rd, 2024 at Blaauwklippen Vineyards - chocolate and fudge pairing because we were too late for the pizza lool! The day Garthy's pants got attacked by the table and we discovered white wine is actually a great stain remover (it worked!). Mishka's face said everything we need to know about the wine taste hahaha. Great photos, hilarious memories, perfect day.",
     date: "December 3, 2024",
     location: "Blaauwklippen Vineyards",
     people: ["Stefan", "Mishka", "Garthy"],
