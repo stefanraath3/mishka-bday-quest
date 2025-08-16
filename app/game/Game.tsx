@@ -11,6 +11,7 @@ import { createMedievalDoorGeometry } from "./components/MedievalDoor";
 import { createWallTorchGeometry, animateTorch } from "./components/WallTorch";
 import AncientScroll from "./components/AncientScroll";
 import DoorLockPuzzle from "./components/DoorLockPuzzle";
+import BirthdayMessage from "./components/BirthdayMessage";
 
 const riddles = [
   {
@@ -164,6 +165,7 @@ export default function Game() {
     null
   );
   const [showDoorPuzzle, setShowDoorPuzzle] = useState(false);
+  const [showBirthdayMessage, setShowBirthdayMessage] = useState(false);
 
   useEffect(() => {
     // Use the ref for game state
@@ -574,6 +576,12 @@ export default function Game() {
 
     // Second chamber walls beyond the door (simple short chamber)
     const chamberDepth = 12;
+    const chamberWallMat = new THREE.MeshStandardMaterial({
+      color: 0x2d2d2d, // Darker, more mysterious color
+      roughness: 0.7,
+      metalness: 0.2,
+    });
+
     addWall(
       new THREE.Vector3(0, wallHeight / 2, farZ + chamberDepth),
       new THREE.Vector3(floorSize, wallHeight, wallThickness),
@@ -597,6 +605,26 @@ export default function Game() {
       new THREE.Vector3(wallThickness, wallHeight, chamberDepth),
       "chamber-right"
     );
+
+    // Glowing magical chest in the final chamber
+    const chestSize = 1.2;
+    const chestGeo = new THREE.BoxGeometry(chestSize, chestSize, chestSize);
+    const chestMat = new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      emissive: 0xffd700,
+      emissiveIntensity: 0, // Initially not glowing
+      metalness: 0.8,
+      roughness: 0.3,
+    });
+    const magicalChest = new THREE.Mesh(chestGeo, chestMat);
+    magicalChest.position.set(0, chestSize / 2, farZ + chamberDepth - 3);
+    magicalChest.castShadow = true;
+    scene.add(magicalChest);
+
+    // Point light for the chest's glow
+    const chestLight = new THREE.PointLight(0xffd700, 0, 10);
+    chestLight.position.copy(magicalChest.position);
+    scene.add(chestLight);
 
     // Key (puzzle item) in the first room - ornate floating key
     const keyMeshes: { [id: string]: THREE.Group } = {};
@@ -928,6 +956,20 @@ export default function Game() {
         if (doorMesh.position.y > wallHeight - 0.2) {
           doorCollider.active = false;
         }
+
+        // Chest glow effect
+        const glowIntensity = (Math.sin(time * 2) + 1) / 2; // Pulsing effect
+        chestMat.emissiveIntensity = glowIntensity * 1.5;
+        chestLight.intensity = glowIntensity * 20;
+      }
+
+      // Chest interaction
+      if (
+        gameState.doorOpen &&
+        playerGroup.position.distanceTo(magicalChest.position) < 2.0 &&
+        !showBirthdayMessage
+      ) {
+        setShowBirthdayMessage(true);
       }
     }
 
@@ -1112,6 +1154,11 @@ export default function Game() {
         words={Array.from(collectedWords)}
         onSolved={handleDoorPuzzleSolved}
         onClose={() => setShowDoorPuzzle(false)}
+      />
+
+      <BirthdayMessage
+        isVisible={showBirthdayMessage}
+        onClose={() => setShowBirthdayMessage(false)}
       />
     </div>
   );
