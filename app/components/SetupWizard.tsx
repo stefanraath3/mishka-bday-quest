@@ -27,18 +27,30 @@ export default function SetupWizard({
   const [volMaster, setVolMaster] = useState(70);
   const [volBg, setVolBg] = useState(30);
   const [volSfx, setVolSfx] = useState(60);
+  const [userUnlockedAudio, setUserUnlockedAudio] = useState(false);
 
   if (!isVisible) return null;
 
   const handleEnableAudio = async () => {
-    await initializeAudio();
-    if (!isEnabled) toggleAudio();
-    playBackgroundMusic("medieval-ambient");
+    if (!userUnlockedAudio) {
+      await initializeAudio();
+      if (!isEnabled) {
+        // This first toggle unlocks the audio context
+        await toggleAudio();
+      }
+      setUserUnlockedAudio(true);
+    } else {
+      // The second click will play the music
+      if (isEnabled) {
+        await playBackgroundMusic("medieval-ambient");
+      }
+    }
   };
 
-  const handleDisableAudio = () => {
-    if (isEnabled) toggleAudio();
+  const handleDisableAudio = async () => {
+    if (isEnabled) await toggleAudio();
     stopBackgroundMusic();
+    setUserUnlockedAudio(false);
   };
 
   const change = (which: "master" | "bg" | "sfx", value: number) => {
@@ -78,7 +90,7 @@ export default function SetupWizard({
                     : "bg-green-700 text-white"
                 }`}
               >
-                {isEnabled ? "ON" : "Enable & Play"}
+                {isEnabled ? (userUnlockedAudio ? "Play" : "ON") : "Enable"}
               </button>
               <button
                 onClick={handleDisableAudio}

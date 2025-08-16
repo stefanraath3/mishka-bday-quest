@@ -12,7 +12,7 @@ export function useAudio() {
   }, [isInitialized]);
 
   const playSound = useCallback(
-    (soundKey: string, options?: { volume?: number; fade?: number }) => {
+    async (soundKey: string, options?: { volume?: number; fade?: number }) => {
       if (isInitialized && isEnabled) {
         // Map the sound keys to AudioManager keys
         const soundMap: Record<string, string> = {
@@ -31,7 +31,7 @@ export function useAudio() {
         };
 
         const mappedKey = soundMap[soundKey] || soundKey;
-        return audioManager.play(mappedKey, options);
+        return await audioManager.play(mappedKey, options);
       }
     },
     [isInitialized, isEnabled]
@@ -48,7 +48,7 @@ export function useAudio() {
   }, []);
 
   const playBackgroundMusic = useCallback(
-    (trackKey: string = "medieval-ambient") => {
+    async (trackKey: string = "medieval-ambient") => {
       if (!isInitialized) return;
 
       // Map the track keys to AudioManager keys
@@ -58,7 +58,7 @@ export function useAudio() {
       };
 
       const mappedKey = trackMap[trackKey] || trackKey;
-      audioManager.playBackgroundMusic(mappedKey);
+      await audioManager.playBackgroundMusic(mappedKey);
     },
     [isInitialized]
   );

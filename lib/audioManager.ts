@@ -156,10 +156,19 @@ export class AudioManager {
   }
 
   // Play sound effect
-  play(
+  async play(
     soundKey: string,
     options?: { volume?: number; fade?: number }
-  ): number | undefined {
+  ): Promise<number | undefined> {
+    // Resume audio context if it's suspended, which can happen on page load
+    if (Howler.ctx && Howler.ctx.state === "suspended") {
+      try {
+        await Howler.ctx.resume();
+      } catch (e) {
+        console.error("Failed to resume audio context:", e);
+      }
+    }
+
     if (!this.isEnabled || !this.sounds.has(soundKey)) {
       console.warn(`Sound not found or audio disabled: ${soundKey}`);
       return;
@@ -188,11 +197,11 @@ export class AudioManager {
   }
 
   // Fade in background music
-  playBackgroundMusic(trackKey: string = "ambientMusic") {
+  async playBackgroundMusic(trackKey: string = "ambientMusic") {
     this.stop("ambientMusic");
     this.stop("celebrationMusic");
 
-    const playId = this.play(trackKey);
+    const playId = await this.play(trackKey);
     if (playId !== undefined) {
       const sound = this.sounds.get(trackKey)!;
       sound.fade(0, this.backgroundMusicVolume, 2000, playId);

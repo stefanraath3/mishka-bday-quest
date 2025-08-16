@@ -844,7 +844,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
     const clock = new THREE.Clock();
     let rafId = 0;
 
-    function update(delta: number) {
+    async function update(delta: number) {
       // Update animation mixer
       if (mixer) {
         mixer.update(delta);
@@ -952,12 +952,12 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
 
           // Play magical sparkle sound when approaching key
           if (distToKey < 2.5 && distToKey > 2.0) {
-            playSound("magical-sparkle", { volume: 0.4 });
+            await playSound("magical-sparkle", { volume: 0.4 });
           }
 
           if (distToKey < 1.5 && !activeRiddle) {
             // Play parchment unfurl sound when opening riddle
-            playSound("parchment-unfurl", { volume: 0.7 });
+            await playSound("parchment-unfurl", { volume: 0.7 });
             setActiveRiddle(riddleData);
           }
 
@@ -1009,7 +1009,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         !showBirthdayMessage
       ) {
         // Play chest opening sound and switch to celebration music
-        playSound("chest-open", { volume: 0.8 });
+        await playSound("chest-open", { volume: 0.8 });
         setTimeout(() => {
           playBackgroundMusic("happy-birthday");
         }, 1000);
