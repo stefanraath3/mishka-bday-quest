@@ -58,18 +58,29 @@
 
   - [ ] Play when E is pressed on chest
   - [ ] Volume level: 0.8
-  - [ ] Should precede party horn
+  - [ ] Only plays chest opening sound (no auto-music)
 
-- [ ] **Party Horn Sound**
+- [ ] **Birthday Message Modal Updates**
 
-  - [ ] Play immediately after chest opens
-  - [ ] Volume level: 0.9
-  - [ ] Creates celebration atmosphere
+  - [ ] Add "🎵 Play Birthday Song" button to birthday modal
+  - [ ] Button should clearly indicate music will play
+  - [ ] Button appears prominently in the message
+  - [ ] Consider icon + text for clarity
 
-- [ ] **Birthday Music**
-  - [ ] Switch from ambient to birthday music
-  - [ ] Implement smooth crossfade
-  - [ ] 1 second delay after party horn
+- [ ] **Birthday Music & Sounds** (User-Triggered Only)
+
+  - [ ] **Party Horn Sound**
+    - [ ] Play when user clicks birthday song button
+    - [ ] Volume level: 0.9
+    - [ ] Creates celebration atmosphere
+  - [ ] **Birthday Music**
+    - [ ] Switch from ambient to birthday music
+    - [ ] Only after user explicitly requests it
+    - [ ] Implement smooth crossfade
+    - [ ] Play immediately when button pressed
+  - [ ] **Additional Celebration Sounds** (Optional)
+    - [ ] Confetti sound effects
+    - [ ] Multiple celebration sounds in sequence
 
 ### 🔊 UI Feedback Sounds
 
@@ -154,8 +165,8 @@
 1. **High Priority** (Core Experience)
 
    - [ ] Chest open sound
-   - [ ] Party horn sound
-   - [ ] Birthday music transition
+   - [ ] Birthday message modal button
+   - [ ] User-triggered party horn + birthday music
    - [ ] Error buzz for wrong answers
 
 2. **Medium Priority** (Polish)
@@ -184,8 +195,10 @@
 - [ ] Solve door puzzle (unlock sound - when added)
 - [ ] Watch door open (creak sound - when added)
 - [ ] Approach chest (glow effect working)
-- [ ] Open chest with E (chest + party horn - when added)
-- [ ] Experience birthday sequence (music switch - when added)
+- [ ] Open chest with E (chest open sound - when added)
+- [ ] See birthday message modal with music button
+- [ ] Click birthday song button (party horn + music switch - when added)
+- [ ] Experience full birthday celebration sequence
 
 ### Edge Case Testing
 
