@@ -36,12 +36,12 @@ export const memoryPhotos: MemoryPhoto[] = [
   {
     id: "photo-4",
     imagePath: "/images/memories/photo4.jpg",
-    title: "Concert Night",
+    title: "Vampire Valentine Madness",
     description:
-      "That amazing concert where we sang along to every song, danced like nobody was watching, and felt completely alive. The music, the energy, the perfect company - unforgettable!",
-    date: "October 22, 2023",
-    location: "City Music Hall",
-    people: ["Mishka", "Concert Crew"],
+      "February 16th, 2025 - The night of the Vampire Valentine! Started out wild, we almost didn't go, but when we finally decided and got there late, they let everyone into the VIP section! Garthy was fascinated by those boys at the back... and Mishka became our official 'trust peck muscle asker' - she went around asking people if Garthy could touch their pecks lool! Costumes on point, chaos at maximum, memories absolutely priceless. What a night!",
+    date: "February 16, 2025",
+    location: "Vampire Valentine Event",
+    people: ["Stefan", "Mishka", "Garthy"],
   },
   {
     id: "photo-5",
