@@ -174,6 +174,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   );
   const [showDoorPuzzle, setShowDoorPuzzle] = useState(false);
   const [showBirthdayMessage, setShowBirthdayMessage] = useState(false);
+  const [nearbyKey, setNearbyKey] = useState<string | null>(null);
 
   // Audio system integration
   const {
@@ -796,6 +797,32 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         case "KeyD":
           input.right = true;
           break;
+        case "KeyE":
+          // Interact with nearby key or door
+          if (nearbyKey && !activeRiddle && !showDoorPuzzle) {
+            if (nearbyKey === "door") {
+              // Open door puzzle
+              console.log(`[Game] E key pressed, opening door puzzle`);
+              if (audioInitialized && audioEnabled) {
+                playSound("button-click", { volume: 0.6 });
+              }
+              setShowDoorPuzzle(true);
+            } else {
+              // Open key riddle
+              const riddleToOpen = riddles.find((r) => r.id === nearbyKey);
+              if (riddleToOpen) {
+                console.log(
+                  `[Game] E key pressed, opening riddle for: ${nearbyKey}`
+                );
+                // Play parchment unfurl sound when opening riddle
+                if (audioInitialized && audioEnabled) {
+                  playSound("parchment-unfurl", { volume: 0.7 });
+                }
+                setActiveRiddle(riddleToOpen);
+              }
+            }
+          }
+          break;
         case "ArrowLeft":
           cameraRotatingLeft = true;
           setCameraRotateLeft(true);
@@ -838,7 +865,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
     }
 
     // Add mouse click handler for user interaction
-    function onMouseClick() {
+    function onMouseClick(event: MouseEvent) {
       if (!hasUserInteracted) {
         setHasUserInteracted(true);
       }
@@ -988,26 +1015,26 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         playerGroup.position.z
       );
 
-      // Key interaction - triggers crossword puzzle
+      // Key interaction - detect nearby keys but require click to open riddle
+      let closestKey: string | null = null;
+      let closestDistance = Infinity;
+
       for (const riddleData of riddles) {
         if (!gameState.collectedKeys.has(riddleData.id)) {
           const keyMesh = keyMeshes[riddleData.id];
           const distToKey = playerGroup.position.distanceTo(keyMesh.position);
 
+          // Track closest key for interaction prompt
+          if (distToKey < 2.0 && distToKey < closestDistance) {
+            closestKey = riddleData.id;
+            closestDistance = distToKey;
+          }
+
           // Play magical sparkle sound when approaching key (use a flag to avoid repeated plays)
           if (distToKey < 2.5 && distToKey > 2.0) {
             // Track if we've played this sound recently
             if (!keyMesh.userData.sparklePlayedRecently) {
-              console.log(`[Game] Sparkle trigger for key ${riddleData.id}:`, {
-                distToKey,
-                audioInitialized,
-                audioEnabled,
-                sparklePlayedRecently: keyMesh.userData.sparklePlayedRecently,
-              });
               if (audioInitialized && audioEnabled) {
-                console.log(
-                  `[Game] Playing magical sparkle for key ${riddleData.id}`
-                );
                 playSound("magical-sparkle", { volume: 0.4 });
                 keyMesh.userData.sparklePlayedRecently = true;
                 setTimeout(() => {
@@ -1017,31 +1044,30 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
             }
           }
 
-          if (distToKey < 1.5 && !activeRiddle) {
-            console.log(`[Game] Riddle trigger for key ${riddleData.id}:`, {
-              distToKey,
-              audioInitialized,
-              audioEnabled,
-              activeRiddle: !!activeRiddle,
-            });
-            // Play parchment unfurl sound when opening riddle
-            if (audioInitialized && audioEnabled) {
-              console.log(
-                `[Game] Playing parchment unfurl for key ${riddleData.id}`
-              );
-              playSound("parchment-unfurl", { volume: 0.7 });
-            }
-            setActiveRiddle(riddleData);
-          }
-
           // Continue key animation
           keyMesh.rotation.y += delta * 1.0;
           keyMesh.rotation.z = Math.sin(Date.now() * 0.002) * 0.1;
           keyMesh.position.y = 1.2 + Math.sin(Date.now() * 0.003) * 0.15;
+
+          // Make key glow when nearby
+          if (distToKey < 2.0) {
+            // Add a glowing effect to indicate it's interactable
+            keyMesh.traverse((child) => {
+              if (child instanceof THREE.Mesh) {
+                const material = child.material as THREE.MeshStandardMaterial;
+                if (material.emissive) {
+                  material.emissiveIntensity =
+                    0.3 + Math.sin(Date.now() * 0.005) * 0.2;
+                }
+              }
+            });
+          }
         }
       }
 
-      // Door interaction
+      // Door interaction - check if near door with all keys
+      let interactTarget = closestKey; // Start with the closest key
+
       if (
         gameState.collectedKeys.size === riddles.length &&
         !gameState.doorOpen
@@ -1049,10 +1075,14 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         const distToDoor = playerGroup.position.distanceTo(
           new THREE.Vector3(0, playerHeight / 2, 14)
         );
-        if (distToDoor < 2.5 && !showDoorPuzzle) {
-          setShowDoorPuzzle(true);
+        // If door is closer than any key, show door prompt instead
+        if (distToDoor < 2.5 && (!closestKey || distToDoor < closestDistance)) {
+          interactTarget = "door";
         }
       }
+
+      // Update nearby interaction target
+      setNearbyKey(interactTarget);
 
       // Door opening animation
       if (gameState.doorOpen) {
@@ -1290,7 +1320,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       <div className="pointer-events-none absolute left-4 top-4 z-10 space-y-2 text-white/90">
         <div className="rounded bg-black/40 px-3 py-2 text-xs sm:text-sm">
           <div className="font-semibold">Controls</div>
-          <div>WASD to move • Arrow keys to look around</div>
+          <div>WASD to move • Arrow keys to look • E to interact</div>
         </div>
         <div className="rounded bg-black/40 px-3 py-2 text-xs sm:text-sm">
           <div>
@@ -1311,8 +1341,20 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           {!hasUserInteracted && (
             <div className="opacity-80">Press any key or click to start</div>
           )}
-          {hasUserInteracted && !activeRiddle && !showDoorPuzzle && (
-            <div className="opacity-80">Arrow keys to look • WASD to move</div>
+          {hasUserInteracted &&
+            !activeRiddle &&
+            !showDoorPuzzle &&
+            !nearbyKey && (
+              <div className="opacity-80">
+                Arrow keys to look • WASD to move
+              </div>
+            )}
+          {nearbyKey && !activeRiddle && !showDoorPuzzle && (
+            <div className="animate-pulse bg-amber-500/80 rounded px-2 py-1 mt-1">
+              {nearbyKey === "door"
+                ? "🚪 Press [E] to unlock the great door"
+                : "🗝️ Press [E] to examine the golden key"}
+            </div>
           )}
         </div>
         <div className="rounded bg-amber-600/80 px-3 py-2 text-xs sm:text-sm">
