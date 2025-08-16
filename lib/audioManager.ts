@@ -106,7 +106,7 @@ export class AudioManager {
       preload: true,
     },
     magicalSparkle: {
-      src: ["/audio/sfx/magic-sparkle.mp3", "/audio/sfx/magic-sparkle.ogg"],
+      src: ["/audio/sfx/magical-sparkle.mp3", "/audio/sfx/magical-sparkle.ogg"],
       volume: this.sfxVolume * 0.8,
       preload: true,
     },

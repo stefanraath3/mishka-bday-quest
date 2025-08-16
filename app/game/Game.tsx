@@ -174,6 +174,37 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   const [showDoorPuzzle, setShowDoorPuzzle] = useState(false);
   const [showBirthdayMessage, setShowBirthdayMessage] = useState(false);
 
+  // Audio system integration
+  const {
+    playSound,
+    playBackgroundMusic,
+    stopBackgroundMusic,
+    isInitialized: audioInitialized,
+    isEnabled: audioEnabled,
+  } = useAudio();
+
+  // Start ambient music when game loads
+  useEffect(() => {
+    if (audioInitialized && audioEnabled) {
+      // Start the medieval ambient music with a slight delay for smooth transition
+      setTimeout(() => {
+        playBackgroundMusic("medieval-ambient");
+      }, 500);
+    }
+
+    // Cleanup: stop background music when component unmounts
+    return () => {
+      if (audioInitialized) {
+        stopBackgroundMusic();
+      }
+    };
+  }, [
+    audioInitialized,
+    audioEnabled,
+    playBackgroundMusic,
+    stopBackgroundMusic,
+  ]);
+
   useEffect(() => {
     // Use the ref for game state
     const gameState = gameStateRef.current;
@@ -919,7 +950,14 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           const keyMesh = keyMeshes[riddleData.id];
           const distToKey = playerGroup.position.distanceTo(keyMesh.position);
 
+          // Play magical sparkle sound when approaching key
+          if (distToKey < 2.5 && distToKey > 2.0) {
+            playSound("magical-sparkle", { volume: 0.4 });
+          }
+
           if (distToKey < 1.5 && !activeRiddle) {
+            // Play parchment unfurl sound when opening riddle
+            playSound("parchment-unfurl", { volume: 0.7 });
             setActiveRiddle(riddleData);
             if (document.pointerLockElement) {
               document.exitPointerLock();
@@ -976,6 +1014,11 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         playerGroup.position.distanceTo(magicalChest.position) < 2.0 &&
         !showBirthdayMessage
       ) {
+        // Play chest opening sound and switch to celebration music
+        playSound("chest-open", { volume: 0.8 });
+        setTimeout(() => {
+          playBackgroundMusic("happy-birthday");
+        }, 1000);
         setShowBirthdayMessage(true);
       }
     }
@@ -1080,6 +1123,9 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
     const scene = sceneRef.current;
     if (!scene) return;
 
+    // Play key collection sound
+    playSound("key-pickup", { volume: 0.8 });
+
     // Update game state ref
     gameStateRef.current.collectedKeys.add(activeRiddle.id);
     gameStateRef.current.collectedWords.add(activeRiddle.answer);
@@ -1110,6 +1156,9 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   return (
     <div className="relative w-full h-[100svh] select-none">
       <div ref={mountRef} className="absolute inset-0" />
+
+      {/* Audio Controls */}
+      <AudioControls />
 
       {/* Game UI */}
       <div className="pointer-events-none absolute left-4 top-4 z-10 space-y-2 text-white/90">

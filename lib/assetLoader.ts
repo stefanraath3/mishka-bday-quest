@@ -68,9 +68,9 @@ export class AssetLoader {
       ],
       "error-buzz": ["/audio/sfx/error-buzz.mp3", "/audio/sfx/error-buzz.ogg"],
       "party-horn": ["/audio/sfx/party-horn.mp3", "/audio/sfx/party-horn.ogg"],
-      "magic-sparkle": [
-        "/audio/sfx/magic-sparkle.mp3",
-        "/audio/sfx/magic-sparkle.ogg",
+      "magical-sparkle": [
+        "/audio/sfx/magical-sparkle.mp3",
+        "/audio/sfx/magical-sparkle.ogg",
       ],
     },
     models: {
