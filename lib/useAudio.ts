@@ -4,37 +4,12 @@ import { audioManager } from "./audioManager";
 export function useAudio() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isEnabled, setIsEnabled] = useState(audioManager.enabled);
-  const initializeOnce = useRef(false);
-
-  useEffect(() => {
-    const initAudio = async () => {
-      if (!initializeOnce.current) {
-        initializeOnce.current = true;
-        await audioManager.initialize();
-        setIsInitialized(true);
-      }
-    };
-
-    // Initialize on first user interaction (required by browsers)
-    const handleUserInteraction = () => {
-      initAudio();
-      document.removeEventListener("click", handleUserInteraction);
-      document.removeEventListener("keydown", handleUserInteraction);
-      document.removeEventListener("touchstart", handleUserInteraction);
-    };
-
-    document.addEventListener("click", handleUserInteraction, { once: true });
-    document.addEventListener("keydown", handleUserInteraction, { once: true });
-    document.addEventListener("touchstart", handleUserInteraction, {
-      once: true,
-    });
-
-    return () => {
-      document.removeEventListener("click", handleUserInteraction);
-      document.removeEventListener("keydown", handleUserInteraction);
-      document.removeEventListener("touchstart", handleUserInteraction);
-    };
-  }, []);
+  const initializeAudio = useCallback(async () => {
+    if (isInitialized) return true;
+    await audioManager.initialize();
+    setIsInitialized(true);
+    return true;
+  }, [isInitialized]);
 
   const playSound = useCallback(
     (soundKey: string, options?: { volume?: number; fade?: number }) => {
@@ -93,6 +68,7 @@ export function useAudio() {
   }, []);
 
   return {
+    initializeAudio,
     playSound,
     stopSound,
     playBackgroundMusic,

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import LoaderScreen from "./components/LoaderScreen";
 import GameStartModal from "./components/GameStartModal";
+import SetupWizard from "./components/SetupWizard";
 import {
   AssetLoader,
   AssetLoadProgress,
@@ -16,7 +17,7 @@ const Game = dynamic(() => import("./game/Game"), { ssr: false });
 
 enum GameState {
   LOADING = "loading",
-  START_SCREEN = "start_screen",
+  SETUP = "setup",
   PLAYING = "playing",
   ERROR = "error",
 }
@@ -70,7 +71,7 @@ export default function Home() {
 
       // Small delay to show completion before transitioning
       setTimeout(() => {
-        setGameState(GameState.START_SCREEN);
+        setGameState(GameState.SETUP);
       }, 1000);
     } catch (error) {
       console.error("Failed to load assets:", error);
@@ -93,7 +94,7 @@ export default function Home() {
   };
 
   const handleBackToStart = () => {
-    setGameState(GameState.START_SCREEN);
+    setGameState(GameState.SETUP);
   };
 
   // Cleanup asset loader on unmount
@@ -117,15 +118,8 @@ export default function Home() {
         />
       );
 
-    case GameState.START_SCREEN:
-      return (
-        <GameStartModal
-          isVisible={true}
-          onStartGame={handleStartGame}
-          onToggleAudio={toggleAudio}
-          audioEnabled={audioEnabled}
-        />
-      );
+    case GameState.SETUP:
+      return <SetupWizard isVisible={true} onContinue={handleStartGame} />;
 
     case GameState.PLAYING:
       return (
