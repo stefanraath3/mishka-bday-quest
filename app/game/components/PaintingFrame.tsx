@@ -21,7 +21,8 @@ export interface PaintingFrameProps {
 
 export function createPaintingFrameGeometry(
   photo: MemoryPhoto,
-  scale = 1
+  scale = 1,
+  wallRotation = 0 // Add rotation parameter to help with positioning
 ): THREE.Group {
   const frameGroup = new THREE.Group();
   frameGroup.name = photo.id;
@@ -59,8 +60,39 @@ export function createPaintingFrameGeometry(
   );
   const innerFrame = new THREE.Mesh(innerFrameGeo, frameMaterial);
 
-  // Use CSG to create frame with cutout (simplified approach)
-  frameGroup.add(outerFrame);
+  // Create frame border by making the outer frame hollow
+  // Instead of CSG, we'll create frame segments around the edges
+
+  const frameSegments = [
+    // Top border
+    new THREE.Mesh(
+      new THREE.BoxGeometry(frameWidth, frameThickness, frameDepth),
+      frameMaterial
+    ),
+    // Bottom border
+    new THREE.Mesh(
+      new THREE.BoxGeometry(frameWidth, frameThickness, frameDepth),
+      frameMaterial
+    ),
+    // Left border
+    new THREE.Mesh(
+      new THREE.BoxGeometry(frameThickness, photoHeight, frameDepth),
+      frameMaterial
+    ),
+    // Right border
+    new THREE.Mesh(
+      new THREE.BoxGeometry(frameThickness, photoHeight, frameDepth),
+      frameMaterial
+    ),
+  ];
+
+  // Position frame segments
+  frameSegments[0].position.y = frameHeight / 2 - frameThickness / 2; // Top
+  frameSegments[1].position.y = -frameHeight / 2 + frameThickness / 2; // Bottom
+  frameSegments[2].position.x = -frameWidth / 2 + frameThickness / 2; // Left
+  frameSegments[3].position.x = frameWidth / 2 - frameThickness / 2; // Right
+
+  frameSegments.forEach((segment) => frameGroup.add(segment));
 
   // Add decorative frame elements
   const decorMaterial = new THREE.MeshStandardMaterial({
@@ -91,46 +123,125 @@ export function createPaintingFrameGeometry(
     photoWidth * 0.95,
     photoHeight * 0.95
   );
+  // Fallback material for when photo is loading or fails to load
   const canvasMaterial = new THREE.MeshStandardMaterial({
-    color: 0xf5f5dc, // Canvas color
+    color: 0xf5f5dc, // Canvas color - will be replaced by photo texture
     roughness: 0.9,
     metalness: 0.0,
   });
 
-  // Load photo texture asynchronously
+  // Load photo texture asynchronously with enhanced error handling
   const textureLoader = new THREE.TextureLoader();
+
+  // Add loading manager for better debugging
+  const loadingManager = new THREE.LoadingManager();
+  textureLoader.manager = loadingManager;
+
+  loadingManager.onLoad = () => {
+    console.log(
+      `[PaintingFrame] Photo texture loaded successfully: ${photo.imagePath}`
+    );
+  };
+
+  loadingManager.onError = (url) => {
+    console.error(`[PaintingFrame] Failed to load texture: ${url}`);
+  };
+
+  console.log(`[PaintingFrame] Attempting to load photo: ${photo.imagePath}`);
+
   textureLoader.load(
     photo.imagePath,
     (texture) => {
       // Successfully loaded photo
+      console.log(
+        `[PaintingFrame] Texture loaded, dimensions: ${texture.image.width}x${texture.image.height}`
+      );
+
       texture.wrapS = THREE.ClampToEdgeWrapping;
       texture.wrapT = THREE.ClampToEdgeWrapping;
       texture.minFilter = THREE.LinearFilter;
       texture.magFilter = THREE.LinearFilter;
+      texture.flipY = false; // Prevent image flipping
+      texture.colorSpace = THREE.SRGBColorSpace; // Ensure correct color space
 
       const photoMaterial = new THREE.MeshStandardMaterial({
         map: texture,
         roughness: 0.7,
         metalness: 0.0,
+        transparent: false,
+        opacity: 1.0,
       });
 
+      canvas.material.dispose(); // Clean up old material
       canvas.material = photoMaterial;
       console.log(
-        `[PaintingFrame] Successfully loaded photo: ${photo.imagePath}`
+        `[PaintingFrame] Photo material applied successfully: ${photo.imagePath}`
       );
     },
-    undefined,
+    (progress) => {
+      console.log(
+        `[PaintingFrame] Loading progress for ${photo.imagePath}: ${
+          (progress.loaded / progress.total) * 100
+        }%`
+      );
+    },
     (error) => {
       console.error(
         `[PaintingFrame] Failed to load photo: ${photo.imagePath}`,
         error
       );
-      // Keep canvas material as fallback
+      console.log(
+        `[PaintingFrame] Keeping fallback canvas material for: ${photo.id}`
+      );
+
+      // Create a debug texture with the photo title as fallback
+      const canvas2D = document.createElement("canvas");
+      canvas2D.width = 512;
+      canvas2D.height = 384;
+      const ctx = canvas2D.getContext("2d")!;
+
+      // Create a simple colored background with text
+      ctx.fillStyle = "#8b7355";
+      ctx.fillRect(0, 0, 512, 384);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "24px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(photo.title, 256, 192);
+      ctx.font = "16px Arial";
+      ctx.fillText("Image not found", 256, 220);
+
+      const debugTexture = new THREE.CanvasTexture(canvas2D);
+      const debugMaterial = new THREE.MeshStandardMaterial({
+        map: debugTexture,
+        roughness: 0.7,
+        metalness: 0.0,
+      });
+
+      canvas.material.dispose();
+      canvas.material = debugMaterial;
     }
   );
 
   const canvas = new THREE.Mesh(canvasGeo, canvasMaterial);
-  canvas.position.z = frameDepth / 2 - 0.01; // Slightly inset from frame
+  
+  // Smart positioning based on wall rotation
+  // For back wall (Math.PI rotation), canvas should be behind the frame depth
+  const isBackWall = Math.abs(wallRotation - Math.PI) < 0.1;
+  const canvasZ = isBackWall 
+    ? -(frameDepth / 2 + 0.02) // Behind frame for back wall (faces into room)  
+    : frameDepth / 2 + 0.02;   // In front for side walls
+    
+  canvas.position.z = canvasZ;
+  
+  console.log(`[PaintingFrame] ${photo.id} - Wall rotation: ${wallRotation}, isBackWall: ${isBackWall}, canvas Z: ${canvasZ}`);
+
+  // Make sure canvas faces forward and is right-side up
+  // Photos were displaying upside down, so rotate 180 degrees around Z axis
+  canvas.rotation.set(0, 0, Math.PI); // Flip 180 degrees to be right-side upd
+
+  // Log key positioning info
+  console.log(`[PaintingFrame] ${photo.id} canvas positioned at z: ${canvasZ}`);
+
   frameGroup.add(canvas);
 
   // Add glass effect (optional)

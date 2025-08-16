@@ -682,7 +682,8 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       if (photo) {
         const paintingMesh = createPaintingFrameGeometry(
           photo,
-          paintingData.scale
+          paintingData.scale,
+          paintingData.rotation.y // Pass Y rotation for wall positioning
         );
         paintingMesh.position.copy(paintingData.position);
         paintingMesh.rotation.copy(paintingData.rotation);
