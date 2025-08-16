@@ -10,6 +10,62 @@ import { createOrnateKeyGeometry } from "./components/OrnateFloatingKey";
 import { createMedievalDoorGeometry } from "./components/MedievalDoor";
 import { createWallTorchGeometry, animateTorch } from "./components/WallTorch";
 import AncientScroll from "./components/AncientScroll";
+import DoorLockPuzzle from "./components/DoorLockPuzzle";
+
+const riddles = [
+  {
+    id: "key1",
+    position: new THREE.Vector3(10, 1.2, 10),
+    riddle: {
+      title: "Riddle of Repentance",
+      text: `A night of confession, but not in a pew,
+             Where laughter and mischief are part of the view.
+             We twist the old word for a cheeky affair,
+             What’s the nickname for ‘repentance’ we share?`,
+      hint: "Think about a special event you all attended... What did you call it among yourselves? 🎭",
+    },
+    answer: "REPENNY",
+  },
+  {
+    id: "key2",
+    position: new THREE.Vector3(-8, 1.2, -9), // Behind a pillar
+    riddle: {
+      title: "Riddle of Strength",
+      text: `I have no joints, but I am hard to break.
+             Engineers love me for the structures they make.
+             I stand firm against stress and strain.
+             What am I, solid and plain?`,
+      hint: "It's a quality of being strong and well-built.",
+    },
+    answer: "ROBUST",
+  },
+  {
+    id: "key3",
+    position: new THREE.Vector3(8, 1.2, -9), // Behind a pillar
+    riddle: {
+      title: "Riddle of the Unspoken",
+      text: `I am a sound, a breath, a fleeting expression,
+             Often embarrassing, a social transgression.
+             Though sometimes silent, I make my presence known.
+             What am I, a puff that is quickly blown?`,
+      hint: "A humorous, sometimes vulgar term for a certain bodily function.",
+    },
+    answer: "QUEEF",
+  },
+  {
+    id: "key4",
+    position: new THREE.Vector3(-8, 1.2, 9), // Behind a pillar
+    riddle: {
+      title: "Riddle of Congestion",
+      text: `I am a point where progress becomes slow,
+             A narrow passage where things cease to flow.
+             In traffic, production, or a story's plot,
+             I am the frustrating, constricted spot.`,
+      hint: "Think of a narrow part of a bottle.",
+    },
+    answer: "BOTTLENECK",
+  },
+];
 
 type InputState = {
   forward: boolean;
@@ -94,16 +150,20 @@ function resolveSphereAabb(
 
 export default function Game() {
   const mountRef = useRef<HTMLDivElement | null>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
   const gameStateRef = useRef({
-    keyCollected: false,
+    collectedKeys: new Set<string>(),
+    collectedWords: new Set<string>(),
     doorOpen: false,
-    puzzleSolved: false,
   });
-  const [keyCollected, setKeyCollected] = useState(false);
+  const [collectedKeys, setCollectedKeys] = useState(new Set<string>());
+  const [collectedWords, setCollectedWords] = useState(new Set<string>());
   const [doorOpen, setDoorOpen] = useState(false);
   const [pointerLocked, setPointerLocked] = useState(false);
-  const [showCrossword, setShowCrossword] = useState(false);
-  const [puzzleSolved, setPuzzleSolved] = useState(false);
+  const [activeRiddle, setActiveRiddle] = useState<(typeof riddles)[0] | null>(
+    null
+  );
+  const [showDoorPuzzle, setShowDoorPuzzle] = useState(false);
 
   useEffect(() => {
     // Use the ref for game state
@@ -124,6 +184,7 @@ export default function Game() {
 
     // Scene
     const scene = new THREE.Scene();
+    sceneRef.current = scene;
     scene.background = new THREE.Color(0x0a0a0a); // Very dark grey background for better contrast
 
     // Camera
@@ -538,10 +599,15 @@ export default function Game() {
     );
 
     // Key (puzzle item) in the first room - ornate floating key
-    const keyMesh = createOrnateKeyGeometry();
-    keyMesh.position.set(10, 1.2, 10);
-    keyMesh.scale.setScalar(1.2); // Scale it appropriately for the scene
-    scene.add(keyMesh);
+    const keyMeshes: { [id: string]: THREE.Group } = {};
+    riddles.forEach((riddleData) => {
+      const keyMesh = createOrnateKeyGeometry();
+      keyMesh.position.copy(riddleData.position);
+      keyMesh.scale.setScalar(1.2); // Scale it appropriately for the scene
+      keyMesh.name = riddleData.id; // Assign name for later lookup
+      scene.add(keyMesh);
+      keyMeshes[riddleData.id] = keyMesh;
+    });
 
     // Player
     const playerGroup = new THREE.Group();
@@ -813,30 +879,43 @@ export default function Game() {
       );
 
       // Key interaction - triggers crossword puzzle
-      if (!gameState.puzzleSolved) {
-        const distToKey = playerGroup.position.distanceTo(keyMesh.position);
-        if (distToKey < 1.0 && !showCrossword) {
-          // Show crossword puzzle instead of immediately collecting key
-          setShowCrossword(true);
-          // Pause pointer lock when puzzle opens
+      for (const riddleData of riddles) {
+        if (!gameState.collectedKeys.has(riddleData.id)) {
+          const keyMesh = keyMeshes[riddleData.id];
+          const distToKey = playerGroup.position.distanceTo(keyMesh.position);
+
+          if (distToKey < 1.5 && !activeRiddle) {
+            setActiveRiddle(riddleData);
+            if (document.pointerLockElement) {
+              document.exitPointerLock();
+            }
+          }
+
+          // Continue key animation
+          keyMesh.rotation.y += delta * 1.0;
+          keyMesh.rotation.z = Math.sin(Date.now() * 0.002) * 0.1;
+          keyMesh.position.y = 1.2 + Math.sin(Date.now() * 0.003) * 0.15;
+        }
+      }
+
+      // Door interaction
+      if (
+        gameState.collectedKeys.size === riddles.length &&
+        !gameState.doorOpen
+      ) {
+        const distToDoor = playerGroup.position.distanceTo(
+          new THREE.Vector3(0, playerHeight / 2, 14)
+        );
+        if (distToDoor < 2.5 && !showDoorPuzzle) {
+          setShowDoorPuzzle(true);
           if (document.pointerLockElement) {
             document.exitPointerLock();
           }
         }
-
-        // Continue key animation until puzzle is solved
-        keyMesh.rotation.y += delta * 1.0;
-        keyMesh.rotation.z = Math.sin(Date.now() * 0.002) * 0.1;
-        keyMesh.position.y = 1.2 + Math.sin(Date.now() * 0.003) * 0.15;
-      } else if (!gameState.keyCollected) {
-        // Puzzle solved - collect the key
-        gameState.keyCollected = true;
-        keyMesh.visible = false;
-        setKeyCollected(true);
       }
 
-      // Open door if key collected
-      if (gameState.keyCollected && !gameState.doorOpen) {
+      // Door opening animation
+      if (gameState.doorOpen) {
         const targetY = wallHeight + 0.1;
         doorMesh.position.y = THREE.MathUtils.damp(
           doorMesh.position.y,
@@ -848,12 +927,7 @@ export default function Game() {
         doorCollider.box = makeAabb(doorMesh.position, doorSize);
         if (doorMesh.position.y > wallHeight - 0.2) {
           doorCollider.active = false;
-          gameState.doorOpen = true;
-          setDoorOpen(true); // Update React state for UI
         }
-      } else if (!gameState.keyCollected) {
-        // Keep collider synced if door closed
-        doorCollider.box = makeAabb(doorMesh.position, doorSize);
       }
     }
 
@@ -891,23 +965,25 @@ export default function Game() {
       });
 
       // Dispose ornate key group
-      if (keyMesh) {
-        keyMesh.traverse((child) => {
-          if (child instanceof THREE.Mesh) {
-            if (child.geometry) child.geometry.dispose();
-            if (child.material) {
-              const material = child.material as
-                | THREE.Material
-                | THREE.Material[];
-              if (Array.isArray(material)) {
-                material.forEach((mat) => mat.dispose());
-              } else {
-                material.dispose();
+      Object.values(keyMeshes).forEach((keyMesh) => {
+        if (keyMesh) {
+          keyMesh.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              if (child.geometry) child.geometry.dispose();
+              if (child.material) {
+                const material = child.material as
+                  | THREE.Material
+                  | THREE.Material[];
+                if (Array.isArray(material)) {
+                  material.forEach((mat) => mat.dispose());
+                } else {
+                  material.dispose();
+                }
               }
             }
-          }
-        });
-      }
+          });
+        }
+      });
 
       // Dispose medieval door group
       if (doorMesh) {
@@ -950,14 +1026,36 @@ export default function Game() {
   }, []);
 
   const handlePuzzleSolved = () => {
-    setPuzzleSolved(true);
-    setShowCrossword(false);
+    if (!activeRiddle) return;
+
+    const scene = sceneRef.current;
+    if (!scene) return;
+
     // Update game state ref
-    gameStateRef.current.puzzleSolved = true;
+    gameStateRef.current.collectedKeys.add(activeRiddle.id);
+    gameStateRef.current.collectedWords.add(activeRiddle.answer);
+
+    // Update React state to trigger re-render and UI updates
+    setCollectedKeys(new Set(gameStateRef.current.collectedKeys));
+    setCollectedWords(new Set(gameStateRef.current.collectedWords));
+
+    // Hide the key in the scene
+    const keyMesh = scene.getObjectByName(activeRiddle.id);
+    if (keyMesh) {
+      keyMesh.visible = false;
+    }
+
+    setActiveRiddle(null);
   };
 
   const handleCloseCrossword = () => {
-    setShowCrossword(false);
+    setActiveRiddle(null);
+  };
+
+  const handleDoorPuzzleSolved = () => {
+    gameStateRef.current.doorOpen = true;
+    setDoorOpen(true);
+    setShowDoorPuzzle(false);
   };
 
   return (
@@ -971,26 +1069,49 @@ export default function Game() {
           <div>Click to lock mouse • WASD to move</div>
         </div>
         <div className="rounded bg-black/40 px-3 py-2 text-xs sm:text-sm">
-          <div>Puzzle: {puzzleSolved ? "solved ✓" : "unsolved"}</div>
-          <div>Key: {keyCollected ? "collected ✓" : "find the key"}</div>
+          <div>
+            Keys: {collectedKeys.size} / {riddles.length}
+          </div>
+          <div className="mt-1">
+            Words:{" "}
+            {Array.from(collectedWords).map((word, i) => (
+              <span
+                key={i}
+                className="mr-1.5 inline-block rounded bg-amber-500/50 px-1.5 py-0.5 text-xs font-semibold"
+              >
+                {word}
+              </span>
+            ))}
+          </div>
           <div>Door: {doorOpen ? "open" : "closed"}</div>
-          {!pointerLocked && !showCrossword && (
+          {!pointerLocked && !activeRiddle && !showDoorPuzzle && (
             <div className="opacity-80">Click the scene to start</div>
           )}
         </div>
-        {!puzzleSolved && (
-          <div className="rounded bg-amber-600/80 px-3 py-2 text-xs sm:text-sm">
-            <div className="font-semibold">Quest:</div>
-            <div>Find and solve the riddle of the golden key</div>
-          </div>
-        )}
+        <div className="rounded bg-amber-600/80 px-3 py-2 text-xs sm:text-sm">
+          <div className="font-semibold">Quest:</div>
+          {collectedKeys.size < riddles.length
+            ? "Find and solve the riddles of the golden keys."
+            : "Use the collected words to unlock the great door."}
+        </div>
       </div>
 
       {/* Ancient Scroll Puzzle Modal */}
-      <AncientScroll
-        isVisible={showCrossword}
-        onSolved={handlePuzzleSolved}
-        onClose={handleCloseCrossword}
+      {activeRiddle && (
+        <AncientScroll
+          isVisible={!!activeRiddle}
+          onSolved={handlePuzzleSolved}
+          onClose={handleCloseCrossword}
+          riddle={activeRiddle.riddle}
+          answer={activeRiddle.answer}
+        />
+      )}
+
+      <DoorLockPuzzle
+        isVisible={showDoorPuzzle}
+        words={Array.from(collectedWords)}
+        onSolved={handleDoorPuzzleSolved}
+        onClose={() => setShowDoorPuzzle(false)}
       />
     </div>
   );

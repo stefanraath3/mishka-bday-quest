@@ -1,37 +1,67 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 interface AncientScrollProps {
   isVisible: boolean;
   onSolved: () => void;
   onClose: () => void;
+  riddle: {
+    title: string;
+    text: string;
+    hint: string;
+  };
+  answer: string;
 }
 
 export default function AncientScroll({
   isVisible,
   onSolved,
   onClose,
+  riddle,
+  answer,
 }: AncientScrollProps) {
   const [currentInput, setCurrentInput] = useState("");
   const [isCorrect, setIsCorrect] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [attempts, setAttempts] = useState(0);
 
-  const correctAnswer = "REPENNY";
-  const maxLength = 7;
+  const correctAnswer = useMemo(() => answer.toUpperCase(), [answer]);
+  const maxLength = correctAnswer.length;
 
   useEffect(() => {
-    if (currentInput.toUpperCase() === correctAnswer) {
+    if (!isVisible) {
+      // Reset state when component becomes hidden
+      setTimeout(() => {
+        setCurrentInput("");
+        setIsCorrect(false);
+        setShowHint(false);
+        setAttempts(0);
+      }, 500); // Delay reset to allow fade-out animation
+    } else {
+      // Autofocus when the modal becomes visible
+      const inputElement = document.getElementById("riddle-input");
+      if (inputElement) {
+        setTimeout(() => inputElement.focus(), 500); // Delay to allow transition
+      }
+    }
+  }, [isVisible]);
+
+  useEffect(() => {
+    if (
+      currentInput.toUpperCase() === correctAnswer &&
+      correctAnswer.length > 0 &&
+      currentInput.length === correctAnswer.length
+    ) {
       setIsCorrect(true);
       setTimeout(() => {
         onSolved();
       }, 1500);
     }
-  }, [currentInput, onSolved]);
+  }, [currentInput, correctAnswer, onSolved]);
 
   const handleInputChange = (value: string) => {
-    if (value.length <= maxLength) {
+    if (value.length <= maxLength && !isCorrect) {
       setCurrentInput(value.toUpperCase());
     }
   };
@@ -45,26 +75,32 @@ export default function AncientScroll({
       // Shake animation for wrong answer
       const grid = document.getElementById("crossword-grid");
       if (grid) {
-        grid.classList.add("animate-pulse");
-        setTimeout(() => grid.classList.remove("animate-pulse"), 500);
+        grid.classList.add("animate-head-shake");
+        setTimeout(() => grid.classList.remove("animate-head-shake"), 800);
       }
     }
+  };
+
+  const gridStyle = {
+    display: "grid",
+    gridTemplateColumns: `repeat(${maxLength}, minmax(0, 1fr))`,
+    gap: "0.25rem",
   };
 
   const renderGrid = () => {
     const cells = [];
     for (let i = 0; i < maxLength; i++) {
       const letter = currentInput[i] || "";
-      const isCorrectPosition = isCorrect && correctAnswer[i] === letter;
+      const isCorrectLetter = isCorrect && correctAnswer[i] === letter;
 
       cells.push(
         <div
           key={i}
           className={`
-            w-12 h-12 border-2 border-amber-600 bg-amber-50
+            w-10 h-10 sm:w-12 sm:h-12 border-2 border-amber-600 bg-amber-50
             flex items-center justify-center text-xl font-bold
             transition-all duration-300
-            ${isCorrectPosition ? "bg-green-200 border-green-500" : ""}
+            ${isCorrectLetter ? "bg-green-200 border-green-500" : ""}
             ${letter ? "text-amber-900" : "text-gray-400"}
           `}
         >
@@ -74,6 +110,11 @@ export default function AncientScroll({
     }
     return cells;
   };
+
+  const riddleLines = riddle.text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line);
 
   return (
     <div
@@ -130,7 +171,7 @@ export default function AncientScroll({
             {/* Title */}
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-amber-900 mb-2">
-                Ancient Riddle
+                {riddle.title}
               </h2>
               <div className="w-24 h-0.5 bg-amber-600 mx-auto"></div>
             </div>
@@ -138,24 +179,27 @@ export default function AncientScroll({
             {/* Riddle Text */}
             <div className="text-center mb-6">
               <p className="text-amber-800 text-lg italic leading-relaxed">
-                &ldquo;A night of confession, but not in a pew,
-                <br />
-                Where laughter and mischief are part of the view.
-                <br />
-                We twist the old word for a cheeky affair,
-                <br />
-                What’s the nickname for ‘repentance’ we share?&rdquo;
+                {riddleLines.map((line, index) => (
+                  <span key={index}>
+                    {line}
+                    {index < riddleLines.length - 1 && <br />}
+                  </span>
+                ))}
               </p>
             </div>
 
             {/* Crossword Grid */}
-            <div id="crossword-grid" className="flex justify-center mb-6">
-              <div className="grid grid-cols-7 gap-1">{renderGrid()}</div>
+            <div
+              id="crossword-grid"
+              className="flex justify-center mb-6 transition-all"
+            >
+              <div style={gridStyle}>{renderGrid()}</div>
             </div>
 
             {/* Input Field */}
             <div className="mb-6">
               <input
+                id="riddle-input"
                 type="text"
                 value={currentInput}
                 onChange={(e) => handleInputChange(e.target.value)}
@@ -163,15 +207,14 @@ export default function AncientScroll({
                 placeholder="Enter your answer..."
                 className="w-full p-3 border-2 border-amber-600 rounded bg-amber-50 text-amber-900 text-center text-lg font-semibold placeholder-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-400"
                 maxLength={maxLength}
-                autoFocus
+                disabled={isCorrect}
               />
             </div>
 
             {/* Hint */}
-            {showHint && (
+            {showHint && !isCorrect && (
               <div className="mb-4 p-3 bg-amber-200 border border-amber-400 rounded text-amber-800 text-sm">
-                <strong>Hint:</strong> Think about that special event you all
-                attended... What did you call it among yourselves? 🎭
+                <strong>Hint:</strong> {riddle.hint}
               </div>
             )}
 
@@ -203,7 +246,8 @@ export default function AncientScroll({
             {/* Attempts Counter */}
             {attempts > 0 && !isCorrect && (
               <div className="text-center text-amber-700 text-sm">
-                Attempts: {attempts} {attempts === 1 ? "(Hint unlocked!)" : ""}
+                Attempts: {attempts}
+                {attempts === 2 && !isCorrect ? " (Hint unlocked!)" : ""}
               </div>
             )}
           </div>
