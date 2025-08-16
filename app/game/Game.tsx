@@ -191,6 +191,20 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   const footstepsIdRef = useRef<number | undefined>(undefined);
   const isPlayingFootsteps = useRef(false);
 
+  // Log audio system state on mount and changes
+  useEffect(() => {
+    console.log(`[Game] Audio state changed:`, {
+      audioInitialized,
+      audioEnabled,
+      audioManagerDirectly: {
+        initialized: (window as any).audioManager?.initialized,
+        enabled: (window as any).audioManager?.enabled,
+      },
+      playSound: typeof playSound,
+      playBackgroundMusic: typeof playBackgroundMusic,
+    });
+  }, [audioInitialized, audioEnabled]);
+
   useEffect(() => {
     // Use the ref for game state
     const gameState = gameStateRef.current;
@@ -885,6 +899,13 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       // Handle animation state changes and footsteps sound
       const shouldWalk = dir.lengthSq() > 0.0001;
       if (shouldWalk !== isWalking) {
+        console.log(`[Game] Walking state changed:`, {
+          shouldWalk,
+          isWalking,
+          audioInitialized,
+          audioEnabled,
+          isPlayingFootsteps: isPlayingFootsteps.current,
+        });
         isWalking = shouldWalk;
 
         if (isWalking) {
@@ -897,7 +918,9 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           }
           // Start footsteps sound
           if (audioInitialized && audioEnabled && !isPlayingFootsteps.current) {
+            console.log(`[Game] Starting footsteps sound`);
             playSound("footsteps", { volume: 0.4 }).then((id) => {
+              console.log(`[Game] Footsteps started with ID:`, id);
               footstepsIdRef.current = id;
               isPlayingFootsteps.current = true;
             });
@@ -912,6 +935,10 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           }
           // Stop footsteps sound
           if (isPlayingFootsteps.current) {
+            console.log(
+              `[Game] Stopping footsteps sound, ID:`,
+              footstepsIdRef.current
+            );
             stopSound("footsteps", footstepsIdRef.current);
             isPlayingFootsteps.current = false;
             footstepsIdRef.current = undefined;
@@ -971,7 +998,16 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           if (distToKey < 2.5 && distToKey > 2.0) {
             // Track if we've played this sound recently
             if (!keyMesh.userData.sparklePlayedRecently) {
+              console.log(`[Game] Sparkle trigger for key ${riddleData.id}:`, {
+                distToKey,
+                audioInitialized,
+                audioEnabled,
+                sparklePlayedRecently: keyMesh.userData.sparklePlayedRecently,
+              });
               if (audioInitialized && audioEnabled) {
+                console.log(
+                  `[Game] Playing magical sparkle for key ${riddleData.id}`
+                );
                 playSound("magical-sparkle", { volume: 0.4 });
                 keyMesh.userData.sparklePlayedRecently = true;
                 setTimeout(() => {
@@ -982,8 +1018,17 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           }
 
           if (distToKey < 1.5 && !activeRiddle) {
+            console.log(`[Game] Riddle trigger for key ${riddleData.id}:`, {
+              distToKey,
+              audioInitialized,
+              audioEnabled,
+              activeRiddle: !!activeRiddle,
+            });
             // Play parchment unfurl sound when opening riddle
             if (audioInitialized && audioEnabled) {
+              console.log(
+                `[Game] Playing parchment unfurl for key ${riddleData.id}`
+              );
               playSound("parchment-unfurl", { volume: 0.7 });
             }
             setActiveRiddle(riddleData);
@@ -1022,7 +1067,15 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
 
         // Play door creak sound when door starts moving
         if (previousY < targetY - 0.5 && !doorMesh.userData.doorSoundPlayed) {
+          console.log(`[Game] Door animation trigger:`, {
+            previousY,
+            targetY,
+            audioInitialized,
+            audioEnabled,
+            doorSoundPlayed: doorMesh.userData.doorSoundPlayed,
+          });
           if (audioInitialized && audioEnabled) {
+            console.log(`[Game] Playing door-creak sound`);
             playSound("door-creak", { volume: 0.8 });
             doorMesh.userData.doorSoundPlayed = true;
           }
@@ -1046,11 +1099,20 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         playerGroup.position.distanceTo(magicalChest.position) < 2.0 &&
         !showBirthdayMessage
       ) {
+        console.log(`[Game] Chest interaction trigger:`, {
+          doorOpen: gameState.doorOpen,
+          distToChest: playerGroup.position.distanceTo(magicalChest.position),
+          showBirthdayMessage,
+          audioInitialized,
+          audioEnabled,
+        });
         // Play chest opening sound and switch to celebration music
         if (audioInitialized && audioEnabled) {
+          console.log(`[Game] Playing chest-open and party-horn sounds`);
           playSound("chest-open", { volume: 0.8 });
           playSound("party-horn", { volume: 0.9 }); // Add party horn for extra celebration
           setTimeout(() => {
+            console.log(`[Game] Switching to happy-birthday music`);
             playBackgroundMusic("happy-birthday");
           }, 1000);
         }
@@ -1151,17 +1213,31 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   }, []);
 
   const handlePuzzleSolved = () => {
+    console.log(`[Game] handlePuzzleSolved called`, {
+      activeRiddle,
+      audioInitialized,
+      audioEnabled,
+    });
+
     if (!activeRiddle) return;
 
     const scene = sceneRef.current;
     if (!scene) return;
 
     // Play key collection sound and riddle success sound
+    console.log(`[Game] Puzzle solved, playing success sounds`);
     if (audioInitialized && audioEnabled) {
+      console.log(`[Game] Playing riddle-success sound`);
       playSound("riddle-success", { volume: 0.8 });
       setTimeout(() => {
+        console.log(`[Game] Playing key-pickup sound`);
         playSound("key-pickup", { volume: 0.8 });
       }, 500);
+    } else {
+      console.warn(`[Game] Cannot play puzzle sounds - audio not ready`, {
+        audioInitialized,
+        audioEnabled,
+      });
     }
 
     // Update game state ref
@@ -1186,9 +1262,16 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   };
 
   const handleDoorPuzzleSolved = () => {
+    console.log(`[Game] handleDoorPuzzleSolved called`, {
+      audioInitialized,
+      audioEnabled,
+    });
     // Play door unlock sound
     if (audioInitialized && audioEnabled) {
+      console.log(`[Game] Playing door-unlock sound`);
       playSound("door-unlock", { volume: 0.9 });
+    } else {
+      console.warn(`[Game] Cannot play door-unlock sound - audio not ready`);
     }
 
     gameStateRef.current.doorOpen = true;

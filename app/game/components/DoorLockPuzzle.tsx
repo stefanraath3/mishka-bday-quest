@@ -82,9 +82,20 @@ export default function DoorLockPuzzle({
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
+      console.log(`[DoorLockPuzzle] Item dragged:`, {
+        active: active.id,
+        over: over.id,
+        audioInitialized,
+        audioEnabled,
+      });
       // Play button click sound when moving items
       if (audioInitialized && audioEnabled) {
+        console.log(`[DoorLockPuzzle] Playing button-click sound`);
         playSound("button-click", { volume: 0.5 });
+      } else {
+        console.warn(
+          `[DoorLockPuzzle] Cannot play button-click sound - audio not ready`
+        );
       }
 
       setItems((items) => {
@@ -94,6 +105,7 @@ export default function DoorLockPuzzle({
 
         // Check for solution
         if (JSON.stringify(newOrder) === JSON.stringify(solution)) {
+          console.log(`[DoorLockPuzzle] Puzzle solved!`);
           setIsCorrect(true);
           setTimeout(() => onSolved(), 1500);
         }

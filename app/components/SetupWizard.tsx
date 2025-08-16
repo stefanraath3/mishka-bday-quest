@@ -32,17 +32,30 @@ export default function SetupWizard({
   if (!isVisible) return null;
 
   const handleEnableAudio = async () => {
+    console.log(`[SetupWizard] handleEnableAudio called`, {
+      userUnlockedAudio,
+      isInitialized,
+      isEnabled,
+    });
+
     if (!userUnlockedAudio) {
+      console.log(`[SetupWizard] Initializing audio...`);
       await initializeAudio();
+      console.log(`[SetupWizard] Audio initialized`);
+
       if (!isEnabled) {
         // This first toggle unlocks the audio context
-        await toggleAudio();
+        console.log(`[SetupWizard] Toggling audio on...`);
+        const result = await toggleAudio();
+        console.log(`[SetupWizard] Audio toggle result:`, result);
       }
       setUserUnlockedAudio(true);
     } else {
       // The second click will play the music
       if (isEnabled) {
+        console.log(`[SetupWizard] Starting background music...`);
         await playBackgroundMusic("medieval-ambient");
+        console.log(`[SetupWizard] Background music started`);
       }
     }
   };

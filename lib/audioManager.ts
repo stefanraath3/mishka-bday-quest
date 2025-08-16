@@ -128,16 +128,29 @@ export class AudioManager {
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
+    console.log("[AudioManager] Starting initialization...");
+    console.log(
+      "[AudioManager] Sound configs to load:",
+      Object.keys(this.soundConfigs)
+    );
+
     try {
       // Load all sounds
       const loadPromises = Object.entries(this.soundConfigs).map(
         ([key, config]) => {
           return new Promise<void>((resolve, reject) => {
+            console.log(`[AudioManager] Loading sound: ${key}`, config);
             const sound = new Howl({
               ...config,
-              onload: () => resolve(),
-              onloaderror: () => {
-                console.warn(`Failed to load sound: ${key}`);
+              onload: () => {
+                console.log(`[AudioManager] Successfully loaded: ${key}`);
+                resolve();
+              },
+              onloaderror: (id, error) => {
+                console.warn(
+                  `[AudioManager] Failed to load sound: ${key}`,
+                  error
+                );
                 resolve(); // Continue even if some sounds fail
               },
             });
@@ -149,9 +162,13 @@ export class AudioManager {
 
       await Promise.all(loadPromises);
       this.isInitialized = true;
-      console.log("Audio system initialized successfully");
+      console.log("[AudioManager] Audio system initialized successfully");
+      console.log(
+        "[AudioManager] Loaded sounds:",
+        Array.from(this.sounds.keys())
+      );
     } catch (error) {
-      console.error("Failed to initialize audio system:", error);
+      console.error("[AudioManager] Failed to initialize audio system:", error);
     }
   }
 
@@ -160,29 +177,63 @@ export class AudioManager {
     soundKey: string,
     options?: { volume?: number; fade?: number }
   ): Promise<number | undefined> {
+    console.log(`[AudioManager] play() called with:`, {
+      soundKey,
+      options,
+      isEnabled: this.isEnabled,
+      isInitialized: this.isInitialized,
+      hasSound: this.sounds.has(soundKey),
+      audioContextState: Howler.ctx?.state,
+    });
+
     // Resume audio context if it's suspended, which can happen on page load
     if (Howler.ctx && Howler.ctx.state === "suspended") {
+      console.log(
+        "[AudioManager] Audio context is suspended, attempting to resume..."
+      );
       try {
         await Howler.ctx.resume();
+        console.log("[AudioManager] Audio context resumed successfully");
       } catch (e) {
-        console.error("Failed to resume audio context:", e);
+        console.error("[AudioManager] Failed to resume audio context:", e);
       }
     }
 
-    if (!this.isEnabled || !this.sounds.has(soundKey)) {
-      console.warn(`Sound not found or audio disabled: ${soundKey}`);
+    if (!this.isEnabled) {
+      console.warn(
+        `[AudioManager] Audio is disabled, cannot play: ${soundKey}`
+      );
+      return;
+    }
+
+    if (!this.sounds.has(soundKey)) {
+      console.warn(`[AudioManager] Sound not found: ${soundKey}`, {
+        availableKeys: Array.from(this.sounds.keys()),
+      });
       return;
     }
 
     const sound = this.sounds.get(soundKey)!;
+    console.log(`[AudioManager] Attempting to play sound: ${soundKey}`, {
+      soundState: sound.state(),
+      volume: sound.volume(),
+    });
+
     const playId = sound.play();
+    console.log(
+      `[AudioManager] Sound started with ID: ${playId} for ${soundKey}`
+    );
 
     if (options?.volume !== undefined) {
       sound.volume(options.volume, playId);
+      console.log(
+        `[AudioManager] Set volume to ${options.volume} for ${soundKey}`
+      );
     }
 
     if (options?.fade) {
       sound.fade(0, sound.volume(), options.fade, playId);
+      console.log(`[AudioManager] Applied fade for ${soundKey}`);
     }
 
     return playId;
@@ -239,11 +290,58 @@ export class AudioManager {
 
   // Enable/disable audio
   toggle() {
+    console.log(
+      `[AudioManager] Toggling audio from ${this.isEnabled} to ${!this
+        .isEnabled}`
+    );
     this.isEnabled = !this.isEnabled;
     if (!this.isEnabled) {
       Howler.stop();
     }
     return this.isEnabled;
+  }
+
+  // Debug function to test playing a sound directly
+  debugPlaySound(soundKey: string) {
+    console.log(`[AudioManager DEBUG] Testing sound: ${soundKey}`);
+    console.log(`[AudioManager DEBUG] Current state:`, {
+      isEnabled: this.isEnabled,
+      isInitialized: this.isInitialized,
+      hasSound: this.sounds.has(soundKey),
+      audioContextState: Howler.ctx?.state,
+      masterVolume: this.masterVolume,
+      sfxVolume: this.sfxVolume,
+    });
+
+    if (this.sounds.has(soundKey)) {
+      const sound = this.sounds.get(soundKey)!;
+      console.log(`[AudioManager DEBUG] Sound object:`, {
+        state: sound.state(),
+        playing: sound.playing(),
+        volume: sound.volume(),
+        duration: sound.duration(),
+      });
+
+      // Force enable for testing
+      const wasEnabled = this.isEnabled;
+      this.isEnabled = true;
+
+      const id = sound.play();
+      console.log(`[AudioManager DEBUG] Played with ID:`, id);
+
+      // Restore original state after a moment
+      setTimeout(() => {
+        this.isEnabled = wasEnabled;
+      }, 100);
+
+      return id;
+    } else {
+      console.log(`[AudioManager DEBUG] Sound not found!`);
+      console.log(
+        `[AudioManager DEBUG] Available sounds:`,
+        Array.from(this.sounds.keys())
+      );
+    }
   }
 
   // Cleanup
@@ -266,3 +364,13 @@ export class AudioManager {
 
 // Create singleton instance
 export const audioManager = new AudioManager();
+
+// Expose for debugging in browser console
+if (typeof window !== "undefined") {
+  (window as any).audioManager = audioManager;
+  (window as any).testSound = (key: string) => audioManager.debugPlaySound(key);
+  console.log("[AudioManager] Debug functions available in console:");
+  console.log("  - window.audioManager (full audio manager)");
+  console.log("  - window.testSound('soundKey') (test a specific sound)");
+  console.log("  Example: window.testSound('keyCollected')");
+}
