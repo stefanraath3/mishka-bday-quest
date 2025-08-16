@@ -494,7 +494,7 @@ export default function Game() {
     const doorCenter = new THREE.Vector3(0, wallHeight / 2, farZ);
     const doorMesh = createMedievalDoorGeometry();
     doorMesh.position.copy(doorCenter);
-    doorMesh.scale.set(1.2, 1.1, 1.0); // Increase door size to be more prominent
+    doorMesh.scale.set(1.2, 2.3, 1.0); // Increase door height to fill the entire doorway
     scene.add(doorMesh);
     const doorCollider: AabbCollider = {
       id: "door",
