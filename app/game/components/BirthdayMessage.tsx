@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
+import { useAudio } from "@/lib/useAudio";
 
 interface BirthdayMessageProps {
   isVisible: boolean;
@@ -51,6 +52,16 @@ export default function BirthdayMessage({
 }: BirthdayMessageProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [showContent, setShowContent] = useState(false);
+  const [musicPlaying, setMusicPlaying] = useState(false);
+
+  // Audio system integration
+  const {
+    playSound,
+    playBackgroundMusic,
+    stopBackgroundMusic,
+    isInitialized: audioInitialized,
+    isEnabled: audioEnabled,
+  } = useAudio();
 
   useEffect(() => {
     if (isVisible) {
@@ -114,8 +125,38 @@ export default function BirthdayMessage({
     } else {
       setCurrentStep(0);
       setShowContent(false);
+      setMusicPlaying(false); // Reset music state when modal is hidden
     }
   }, [isVisible]);
+
+  const handlePlayBirthdayMusic = async () => {
+    if (!audioInitialized || !audioEnabled) {
+      console.warn("[BirthdayMessage] Audio not available for birthday music");
+      return;
+    }
+
+    try {
+      console.log(
+        "[BirthdayMessage] Playing birthday celebration sounds and music"
+      );
+
+      // Play party horn sound first
+      await playSound("party-horn", { volume: 0.9 });
+
+      // Switch to birthday music after a short delay
+      setTimeout(() => {
+        playBackgroundMusic("happy-birthday");
+        setMusicPlaying(true);
+      }, 1000);
+
+      // Additional celebration sounds
+      setTimeout(() => {
+        playSound("magical-sparkle", { volume: 0.6 });
+      }, 1500);
+    } catch (error) {
+      console.error("[BirthdayMessage] Failed to play birthday music:", error);
+    }
+  };
 
   const nextStep = () => {
     if (currentStep < celebrationMessages.length - 1) {
@@ -191,6 +232,32 @@ export default function BirthdayMessage({
               />
             ))}
           </div>
+
+          {/* Birthday Music Button */}
+          {audioInitialized && audioEnabled && (
+            <div className="mb-4">
+              <button
+                onClick={handlePlayBirthdayMusic}
+                disabled={musicPlaying}
+                className={`px-8 py-4 rounded-full font-bold text-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                  musicPlaying
+                    ? "bg-green-600 text-white cursor-not-allowed"
+                    : "bg-pink-600 hover:bg-pink-500 text-white animate-pulse"
+                }`}
+              >
+                {musicPlaying ? (
+                  <>🎵 Birthday Song Playing! 🎵</>
+                ) : (
+                  <>🎵 Play Birthday Song 🎶</>
+                )}
+              </button>
+              <p className="text-sm text-gray-200 mt-2 italic">
+                {musicPlaying
+                  ? "🎼 Enjoying the birthday celebration!"
+                  : "🎧 Click to hear the special birthday music!"}
+              </p>
+            </div>
+          )}
 
           {/* Action button */}
           <button
