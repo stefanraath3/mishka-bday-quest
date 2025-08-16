@@ -1221,13 +1221,14 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           delta
         );
 
-        // [REMOVED TEMPORARILY] Door creak sound - to be added later
-        // if (previousY < targetY - 0.5 && !doorMesh.userData.doorSoundPlayed) {
-        //   if (audioInitialized && audioEnabled) {
-        //     playSound("door-creak", { volume: 0.8 });
-        //     doorMesh.userData.doorSoundPlayed = true;
-        //   }
-        // }
+        // Door creak sound - play once when door starts moving significantly
+        if (previousY < targetY - 0.5 && !doorMesh.userData.doorSoundPlayed) {
+          if (audioInitialized && audioEnabled) {
+            console.log(`[Game] Playing door-creak sound`);
+            playSound("door-creak", { volume: 0.8 });
+            doorMesh.userData.doorSoundPlayed = true;
+          }
+        }
 
         // Update collider box position; deactivate once sufficiently open
         doorCollider.box = makeAabb(doorMesh.position, doorSize);
@@ -1383,10 +1384,12 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
 
   const handleDoorPuzzleSolved = () => {
     console.log(`[Game] handleDoorPuzzleSolved called`);
-    // [REMOVED TEMPORARILY] Door unlock sound - to be added later
-    // if (audioInitialized && audioEnabled) {
-    //   playSound("door-unlock", { volume: 0.9 });
-    // }
+
+    // Play door unlock sound when puzzle is solved
+    if (audioInitialized && audioEnabled) {
+      console.log(`[Game] Playing door-unlock sound`);
+      playSound("door-unlock", { volume: 0.9 });
+    }
 
     gameStateRef.current.doorOpen = true;
     setDoorOpen(true);
