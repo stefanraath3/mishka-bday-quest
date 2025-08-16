@@ -12,6 +12,8 @@ import { createWallTorchGeometry, animateTorch } from "./components/WallTorch";
 import AncientScroll from "./components/AncientScroll";
 import DoorLockPuzzle from "./components/DoorLockPuzzle";
 import BirthdayMessage from "./components/BirthdayMessage";
+import AudioControls from "./components/AudioControls";
+import { useAudio } from "@/lib/useAudio";
 
 const riddles = [
   {
