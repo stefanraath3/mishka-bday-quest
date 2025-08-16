@@ -46,12 +46,12 @@ export const memoryPhotos: MemoryPhoto[] = [
   {
     id: "photo-5",
     imagePath: "/images/memories/photo5.jpg",
-    title: "Hiking Achievement",
+    title: "Repentance Shopping Spree",
     description:
-      "The day we conquered that challenging trail together. Your determination was inspiring, and the view from the top was breathtaking - almost as breathtaking as your smile when we made it!",
-    date: "August 5, 2023",
-    location: "Mountain Peak Trail",
-    people: ["Mishka", "Adventure Buddies"],
+      "Saturday, March 8th, 2025 - China Town shopping adventure for Repentance outfits! We got some... interesting props (those water dick guns lool) and Mishka found her perfect cute wings. Little did we know we were prepping for a night filled with wax, whip wacking, and some very interesting lighting choices! The shopping was almost as memorable as the event itself.",
+    date: "March 8, 2025",
+    location: "China Town",
+    people: ["Mishka"],
   },
   {
     id: "photo-6",
