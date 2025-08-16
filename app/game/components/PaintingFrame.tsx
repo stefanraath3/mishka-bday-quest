@@ -224,22 +224,30 @@ export function createPaintingFrameGeometry(
 
   const canvas = new THREE.Mesh(canvasGeo, canvasMaterial);
 
-  // Smart positioning based on wall rotation
-  // For back wall (Math.PI rotation), canvas should be behind the frame depth
-  const isBackWall = Math.abs(wallRotation - Math.PI) < 0.1;
-  const canvasZ = isBackWall
-    ? -(frameDepth / 2 + 0.02) // Behind frame for back wall (faces into room)
-    : frameDepth / 2 + 0.02; // In front for side walls
-
+  // Place the photo plane flush with the frame's front face in LOCAL space
+  // The group rotation will orient it correctly for any wall.
+  const canvasZ = frameDepth / 2 + 0.02;
   canvas.position.z = canvasZ;
 
   console.log(
-    `[PaintingFrame] ${photo.id} - Wall rotation: ${wallRotation}, isBackWall: ${isBackWall}, canvas Z: ${canvasZ}`
+    `[PaintingFrame] ${photo.id} - Wall rotation: ${wallRotation}, canvas Z: ${canvasZ}`
   );
 
   // Make sure canvas faces forward and is right-side up
-  // Photos were displaying upside down, so rotate 180 degrees around Z axis
-  canvas.rotation.set(0, 0, Math.PI); // Flip 180 degrees to be right-side upd
+  // Different rotations needed based on which wall the painting is on
+  if (Math.abs(wallRotation - Math.PI) < 0.1) {
+    // Back wall (rotation ≈ π): flip both Y and Z to face inward and be right-side up
+    canvas.rotation.set(0, Math.PI, Math.PI);
+  } else if (Math.abs(wallRotation - Math.PI / 2) < 0.1) {
+    // Left wall (rotation ≈ π/2): just flip upside down
+    canvas.rotation.set(0, 0, Math.PI);
+  } else if (Math.abs(wallRotation + Math.PI / 2) < 0.1) {
+    // Right wall (rotation ≈ -π/2): just flip upside down
+    canvas.rotation.set(0, 0, Math.PI);
+  } else {
+    // Front-facing or center painting (rotation ≈ 0): just flip upside down
+    canvas.rotation.set(0, 0, Math.PI);
+  }
 
   // Log key positioning info
   console.log(`[PaintingFrame] ${photo.id} canvas positioned at z: ${canvasZ}`);
@@ -259,7 +267,8 @@ export function createPaintingFrameGeometry(
     envMapIntensity: 0.8,
   });
   const glass = new THREE.Mesh(glassGeo, glassMaterial);
-  glass.position.z = frameDepth / 2 + 0.005; // In front of photo
+  // Ensure glass sits slightly in front of the photo plane
+  glass.position.z = canvasZ + 0.003;
   frameGroup.add(glass);
 
   // Add subtle glow effect for interactivity
