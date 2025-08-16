@@ -239,7 +239,7 @@ export default function AncientScroll({
             {/* Success Message */}
             {isCorrect && (
               <div className="text-center text-green-700 font-bold text-lg animate-pulse">
-                🎉 The ancient door creaks open... 🎉
+                ✨ Key collected! The word is yours! ✨
               </div>
             )}
 
