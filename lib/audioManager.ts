@@ -10,7 +10,7 @@ export interface SoundConfig {
 
 export class AudioManager {
   private sounds: Map<string, Howl> = new Map();
-  private isEnabled = true;
+  private isEnabled = false;
   private masterVolume = 0.7;
   private backgroundMusicVolume = 0.3;
   private sfxVolume = 0.6;

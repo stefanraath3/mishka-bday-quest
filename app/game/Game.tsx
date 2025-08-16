@@ -187,29 +187,6 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   // Track if user has interacted with the game
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
-  // Start ambient music only after user interaction
-  useEffect(() => {
-    if (audioInitialized && audioEnabled && hasUserInteracted) {
-      // Start the medieval ambient music with a slight delay for smooth transition
-      setTimeout(() => {
-        playBackgroundMusic("medieval-ambient");
-      }, 500);
-    }
-
-    // Cleanup: stop background music when component unmounts
-    return () => {
-      if (audioInitialized) {
-        stopBackgroundMusic();
-      }
-    };
-  }, [
-    audioInitialized,
-    audioEnabled,
-    hasUserInteracted,
-    playBackgroundMusic,
-    stopBackgroundMusic,
-  ]);
-
   useEffect(() => {
     // Use the ref for game state
     const gameState = gameStateRef.current;

@@ -11,6 +11,8 @@ export default function AudioControls() {
     setMasterVolume,
     setBackgroundVolume,
     setSfxVolume,
+    playBackgroundMusic,
+    stopBackgroundMusic,
   } = useAudio();
 
   const [showControls, setShowControls] = useState(false);
@@ -19,6 +21,15 @@ export default function AudioControls() {
     background: 30,
     sfx: 60,
   });
+
+  const handleToggleAudio = () => {
+    const newState = toggleAudio();
+    if (newState) {
+      playBackgroundMusic("medieval-ambient");
+    } else {
+      stopBackgroundMusic();
+    }
+  };
 
   const handleVolumeChange = (
     type: "master" | "background" | "sfx",
@@ -63,7 +74,7 @@ export default function AudioControls() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold">Audio Settings</h3>
             <button
-              onClick={toggleAudio}
+              onClick={handleToggleAudio}
               className={`px-3 py-1 rounded text-sm ${
                 isEnabled
                   ? "bg-green-600 hover:bg-green-500"
