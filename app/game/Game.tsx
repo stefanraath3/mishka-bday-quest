@@ -151,7 +151,12 @@ function resolveSphereAabb(
   return correction;
 }
 
-export default function Game() {
+interface GameProps {
+  loadedAssets?: import("@/lib/assetLoader").LoadedAssets | null;
+  onBackToMenu?: () => void;
+}
+
+export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const gameStateRef = useRef({
