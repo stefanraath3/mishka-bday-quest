@@ -192,6 +192,15 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   const nearbyKeyRef = useRef<string | null>(null);
   const lastOpenedRiddleRef = useRef<string | null>(null);
 
+  // Loading state for smooth fade-in
+  const [sceneReady, setSceneReady] = useState(false);
+  const loadingAssetsRef = useRef({
+    character: false,
+    chest: false,
+    photosLoaded: 0,
+    totalPhotos: 6,
+  });
+
   // Audio system integration
   const {
     playSound,
@@ -229,6 +238,23 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       `[Game] Component mounted - Initial birthday message state: ${showBirthdayMessage}`
     );
   }, []);
+
+  // Check if all critical assets are loaded
+  const checkAssetsReady = () => {
+    const assets = loadingAssetsRef.current;
+    const allLoaded =
+      assets.character &&
+      assets.chest &&
+      assets.photosLoaded >= assets.totalPhotos;
+
+    if (allLoaded && !sceneReady) {
+      console.log(`[Game] All critical assets loaded, starting fade-in`);
+      // Small delay to ensure everything is rendered
+      setTimeout(() => {
+        setSceneReady(true);
+      }, 100);
+    }
+  };
 
   useEffect(() => {
     // Use the ref for game state
@@ -683,7 +709,15 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         const paintingMesh = createPaintingFrameGeometry(
           photo,
           paintingData.scale,
-          paintingData.rotation.y // Pass Y rotation for wall positioning
+          paintingData.rotation.y, // Pass Y rotation for wall positioning
+          () => {
+            // Photo loaded callback
+            loadingAssetsRef.current.photosLoaded++;
+            console.log(
+              `[Game] Photo loaded: ${photo.id} (${loadingAssetsRef.current.photosLoaded}/${loadingAssetsRef.current.totalPhotos})`
+            );
+            checkAssetsReady();
+          }
         );
         paintingMesh.position.copy(paintingData.position);
         paintingMesh.rotation.copy(paintingData.rotation);
@@ -738,6 +772,10 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
 
         playerGroup.add(model);
 
+        // Mark character as loaded
+        loadingAssetsRef.current.character = true;
+        checkAssetsReady();
+
         // Setup animation mixer
         if (gltf.animations && gltf.animations.length > 0) {
           mixer = new THREE.AnimationMixer(model);
@@ -787,6 +825,10 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         capsule.position.set(0, 0, 0);
         capsule.rotation.y = Math.PI;
         playerGroup.add(capsule);
+
+        // Mark character as loaded (even fallback)
+        loadingAssetsRef.current.character = true;
+        checkAssetsReady();
       }
     );
 
@@ -820,6 +862,10 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         });
 
         scene.add(magicalChest);
+
+        // Mark chest as loaded
+        loadingAssetsRef.current.chest = true;
+        checkAssetsReady();
       },
       undefined,
       (error) => {
@@ -838,6 +884,10 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         fallbackChest.castShadow = true;
         scene.add(fallbackChest);
         magicalChest = fallbackChest as unknown as THREE.Group; // Cast to Group for compatibility
+
+        // Mark chest as loaded (even fallback)
+        loadingAssetsRef.current.chest = true;
+        checkAssetsReady();
       }
     );
 
@@ -1577,6 +1627,22 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   return (
     <div className="relative w-full h-[100svh] select-none">
       <div ref={mountRef} className="absolute inset-0" />
+
+      {/* Fade-in overlay to hide initial loading */}
+      <div
+        className={`absolute inset-0 bg-black pointer-events-none transition-opacity duration-1000 z-50 ${
+          sceneReady ? "opacity-0" : "opacity-100"
+        }`}
+      >
+        {!sceneReady && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-amber-500 text-lg">Entering the castle...</p>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Audio Controls */}
       <AudioControls />

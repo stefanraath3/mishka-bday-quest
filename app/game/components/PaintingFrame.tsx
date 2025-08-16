@@ -22,7 +22,8 @@ export interface PaintingFrameProps {
 export function createPaintingFrameGeometry(
   photo: MemoryPhoto,
   scale = 1,
-  wallRotation = 0 // Add rotation parameter to help with positioning
+  wallRotation = 0, // Add rotation parameter to help with positioning
+  onPhotoLoaded?: () => void // Callback when photo texture loads
 ): THREE.Group {
   const frameGroup = new THREE.Group();
   frameGroup.name = photo.id;
@@ -177,6 +178,11 @@ export function createPaintingFrameGeometry(
       console.log(
         `[PaintingFrame] Photo material applied successfully: ${photo.imagePath}`
       );
+
+      // Notify that photo has loaded
+      if (onPhotoLoaded) {
+        onPhotoLoaded();
+      }
     },
     (progress) => {
       console.log(
@@ -219,6 +225,11 @@ export function createPaintingFrameGeometry(
 
       canvas.material.dispose();
       canvas.material = debugMaterial;
+
+      // Even with fallback, notify that loading is complete
+      if (onPhotoLoaded) {
+        onPhotoLoaded();
+      }
     }
   );
 
