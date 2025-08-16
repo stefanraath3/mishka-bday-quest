@@ -26,12 +26,12 @@ export const memoryPhotos: MemoryPhoto[] = [
   {
     id: "photo-3",
     imagePath: "/images/memories/photo3.jpg",
-    title: "Coffee & Dreams",
+    title: "Vineyard Adventures & Wine Hacks",
     description:
-      "Those quiet morning talks over coffee where we shared our dreams, fears, and everything in between. These simple moments together are the ones I treasure most.",
-    date: "September 8, 2023",
-    location: "Corner Café",
-    people: ["Mishka", "Best Friend"],
+      "December 3rd, 2024 at Blaauwklippen Vineyards - chocolate and fudge pairing because we were too late for the pizza lool! The day Garthy's pants got messy and we discovered white wine is actually a great stain remover (it worked!). Mishka's face said everything we need to know about the wine taste hahaha. Great photos, hilarious memories, perfect day.",
+    date: "December 3, 2024",
+    location: "Blaauwklippen Vineyards",
+    people: ["Stefan", "Mishka", "Garthy"],
   },
   {
     id: "photo-4",
