@@ -116,7 +116,7 @@ export class AssetLoader {
   }
 
   private loadAudioAsset(key: string, urls: string[]): Promise<Howl> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       this.updateProgress("audio", key, `Loading audio: ${key}`);
 
       const sound = new Howl({
@@ -148,7 +148,7 @@ export class AssetLoader {
   }
 
   private loadModelAsset(key: string, url: string): Promise<THREE.Group> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       this.updateProgress("model", key, `Loading model: ${key}`);
 
       const loader = new GLTFLoader();
@@ -162,7 +162,7 @@ export class AssetLoader {
           this.updateProgress("model", key, `Loaded model: ${key}`);
           resolve(model);
         },
-        (progress) => {
+        (_progress) => {
           // Optional: Could update sub-progress here
         },
         (error) => {
@@ -190,7 +190,7 @@ export class AssetLoader {
   }
 
   private loadTextureAsset(key: string, url: string): Promise<THREE.Texture> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       this.updateProgress("texture", key, `Loading texture: ${key}`);
 
       const loader = new THREE.TextureLoader();

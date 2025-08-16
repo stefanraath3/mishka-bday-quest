@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import LoaderScreen from "./components/LoaderScreen";
-import GameStartModal from "./components/GameStartModal";
+
 import SetupWizard from "./components/SetupWizard";
 import {
   AssetLoader,
@@ -36,11 +36,7 @@ export default function Home() {
   const [loadedAssets, setLoadedAssets] = useState<LoadedAssets | null>(null);
 
   // Audio system integration
-  const {
-    isInitialized: audioInitialized,
-    isEnabled: audioEnabled,
-    toggleAudio,
-  } = useAudio();
+  const {} = useAudio();
 
   // Asset loader instance
   const assetLoaderRef = useRef<AssetLoader | null>(null);

@@ -167,8 +167,8 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   const [collectedKeys, setCollectedKeys] = useState(new Set<string>());
   const [collectedWords, setCollectedWords] = useState(new Set<string>());
   const [doorOpen, setDoorOpen] = useState(false);
-  const [cameraRotateLeft, setCameraRotateLeft] = useState(false);
-  const [cameraRotateRight, setCameraRotateRight] = useState(false);
+  const [, setCameraRotateLeft] = useState(false);
+  const [, setCameraRotateRight] = useState(false);
   const [activeRiddle, setActiveRiddle] = useState<(typeof riddles)[0] | null>(
     null
   );
@@ -182,7 +182,6 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   const {
     playSound,
     playBackgroundMusic,
-    stopBackgroundMusic,
     stopSound,
     isInitialized: audioInitialized,
     isEnabled: audioEnabled,
@@ -626,11 +625,6 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
 
     // Second chamber walls beyond the door (simple short chamber)
     const chamberDepth = 12;
-    const chamberWallMat = new THREE.MeshStandardMaterial({
-      color: 0x2d2d2d, // Darker, more mysterious color
-      roughness: 0.7,
-      metalness: 0.2,
-    });
 
     addWall(
       new THREE.Vector3(0, wallHeight / 2, farZ + chamberDepth),
@@ -811,7 +805,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         fallbackChest.position.copy(chestPosition);
         fallbackChest.castShadow = true;
         scene.add(fallbackChest);
-        magicalChest = fallbackChest as any; // Cast to Group for compatibility
+        magicalChest = fallbackChest as unknown as THREE.Group; // Cast to Group for compatibility
       }
     );
 
@@ -974,7 +968,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
     }
 
     // Add mouse click handler for user interaction
-    function onMouseClick(event: MouseEvent) {
+    function onMouseClick(_event: MouseEvent) {
       if (!hasUserInteracted) {
         setHasUserInteracted(true);
       }
