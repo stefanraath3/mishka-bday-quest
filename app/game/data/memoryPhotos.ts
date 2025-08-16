@@ -6,12 +6,12 @@ export const memoryPhotos: MemoryPhoto[] = [
   {
     id: "photo-1",
     imagePath: "/images/memories/photo1.jpg", // Add your photos to public/images/memories/
-    title: "Summer Adventure",
+    title: "Our First Restaurant Date",
     description:
-      "Remember this amazing day when we went on that spontaneous adventure? The sun was shining, we were laughing until our stomachs hurt, and everything felt perfect. This was one of those moments that makes life truly beautiful.",
-    date: "July 15, 2023",
-    location: "Sunset Beach",
-    people: ["Mishka", "Sarah", "Mike", "Alex"],
+      "September 3rd, 2024 - our very first restaurant date together at Eden on the Bay! Remember how the place we originally wanted to go to was mysteriously shut down? We couldn't stop joking that they closed right after Mishka called to book! But it turned out to be perfect - this cozy spot by the bay in Bloubergstrand gave us the most amazing evening. Three friends becoming something more special, sharing laughs, stories, and that unforgettable night that started it all.",
+    date: "September 3, 2024",
+    location: "Eden on the Bay, Bloubergstrand",
+    people: ["Garthy", "Mishka"],
   },
   {
     id: "photo-2",

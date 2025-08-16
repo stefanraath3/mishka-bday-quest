@@ -192,48 +192,9 @@ export default function PhotoViewer({
                     This photo is part of your personal memory palace. Each
                     painting holds a special moment in time.
                   </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        if (audioInitialized && audioEnabled) {
-                          playSound("camera-shutter", { volume: 0.5 });
-                        }
-                        // Could add favorite functionality here
-                      }}
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-full text-sm font-medium transition-colors duration-200"
-                    >
-                      ⭐ Favorite
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (audioInitialized && audioEnabled) {
-                          playSound("camera-shutter", { volume: 0.4 });
-                        }
-                        // Could add share functionality here
-                      }}
-                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full text-sm font-medium transition-colors duration-200"
-                    >
-                      🔗 Share Memory
-                    </button>
-                  </div>
-                </div>
-
-                {/* Navigation hint */}
-                <div className="text-center text-gray-600 text-sm bg-gray-50 p-3 rounded">
-                  <p>
-                    🎮 Continue exploring the memory palace to discover more
-                    photos and memories!
-                  </p>
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Footer */}
-          <div className="bg-gradient-to-r from-amber-100 to-yellow-100 p-4 text-center">
-            <p className="text-amber-800 font-medium">
-              🎂 A special moment preserved in your birthday memory palace 🏰
-            </p>
           </div>
         </div>
 
