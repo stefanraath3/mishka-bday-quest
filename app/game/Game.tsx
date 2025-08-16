@@ -822,6 +822,18 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
               //   playSound("button-click", { volume: 0.6 });
               // }
               setShowDoorPuzzle(true);
+            } else if (currentNearbyKey === "chest") {
+              // Open chest and show birthday message
+              console.log(`[Game] E key pressed, opening chest`);
+              // [REMOVED TEMPORARILY] Chest and birthday sounds - to be added later
+              // if (audioInitialized && audioEnabled) {
+              //   playSound("chest-open", { volume: 0.8 });
+              //   playSound("party-horn", { volume: 0.9 });
+              //   setTimeout(() => {
+              //     playBackgroundMusic("happy-birthday");
+              //   }, 1000);
+              // }
+              setShowBirthdayMessage(true);
             } else {
               // Open key riddle
               console.log(
@@ -1189,14 +1201,17 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         chestLight.intensity = glowIntensity * 20;
       }
 
-      // [REMOVED TEMPORARILY] Chest interaction and birthday sounds - to be added later
-      if (
-        gameState.doorOpen &&
-        playerGroup.position.distanceTo(magicalChest.position) < 2.0 &&
-        !showBirthdayMessage
-      ) {
-        // Temporarily just show the birthday message without sounds
-        setShowBirthdayMessage(true);
+      // Chest interaction - check if near chest
+      if (gameState.doorOpen && !showBirthdayMessage) {
+        const distToChest = playerGroup.position.distanceTo(
+          magicalChest.position
+        );
+        if (distToChest < 2.0) {
+          // Update interaction target to "chest" if it's closer than any key
+          if (!interactTarget || distToChest < closestDistance) {
+            interactTarget = "chest";
+          }
+        }
       }
     }
 
@@ -1395,13 +1410,18 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
                 Arrow keys to look • WASD to move
               </div>
             )}
-          {nearbyKey && !activeRiddle && !showDoorPuzzle && (
-            <div className="animate-pulse bg-amber-500/80 rounded px-2 py-1 mt-1">
-              {nearbyKey === "door"
-                ? "🚪 Press [E] to unlock the great door"
-                : "🗝️ Press [E] to examine the golden key"}
-            </div>
-          )}
+          {nearbyKey &&
+            !activeRiddle &&
+            !showDoorPuzzle &&
+            !showBirthdayMessage && (
+              <div className="animate-pulse bg-amber-500/80 rounded px-2 py-1 mt-1">
+                {nearbyKey === "door"
+                  ? "🚪 Press [E] to unlock the great door"
+                  : nearbyKey === "chest"
+                  ? "🎁 Press [E] to open the magical chest"
+                  : "🗝️ Press [E] to examine the golden key"}
+              </div>
+            )}
         </div>
         <div className="rounded bg-amber-600/80 px-3 py-2 text-xs sm:text-sm">
           <div className="font-semibold">Quest:</div>
