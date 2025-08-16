@@ -175,6 +175,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   const [showDoorPuzzle, setShowDoorPuzzle] = useState(false);
   const [showBirthdayMessage, setShowBirthdayMessage] = useState(false);
   const [nearbyKey, setNearbyKey] = useState<string | null>(null);
+  const nearbyKeyRef = useRef<string | null>(null);
 
   // Audio system integration
   const {
@@ -205,6 +206,16 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       playBackgroundMusic: typeof playBackgroundMusic,
     });
   }, [audioInitialized, audioEnabled]);
+
+  // Debug log nearbyKey state periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (nearbyKey) {
+        console.log(`[Game] Current nearbyKey: "${nearbyKey}"`);
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [nearbyKey]);
 
   useEffect(() => {
     // Use the ref for game state
@@ -798,9 +809,21 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           input.right = true;
           break;
         case "KeyE":
+          const currentNearbyKey = nearbyKeyRef.current;
+          console.log(`[Game] E key pressed, state:`, {
+            nearbyKey: currentNearbyKey,
+            nearbyKeyFromState: nearbyKey,
+            activeRiddle: !!activeRiddle,
+            showDoorPuzzle,
+            collectedKeys: gameState.collectedKeys.size,
+            totalKeys: riddles.length,
+          });
+
           // Interact with nearby key or door
-          if (nearbyKey && !activeRiddle && !showDoorPuzzle) {
-            if (nearbyKey === "door") {
+          if (currentNearbyKey && !activeRiddle && !showDoorPuzzle) {
+            console.log(`[Game] E key interaction conditions met`);
+
+            if (currentNearbyKey === "door") {
               // Open door puzzle
               console.log(`[Game] E key pressed, opening door puzzle`);
               if (audioInitialized && audioEnabled) {
@@ -809,18 +832,38 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
               setShowDoorPuzzle(true);
             } else {
               // Open key riddle
-              const riddleToOpen = riddles.find((r) => r.id === nearbyKey);
+              console.log(
+                `[Game] Looking for riddle with id: ${currentNearbyKey}`
+              );
+              console.log(
+                `[Game] Available riddles:`,
+                riddles.map((r) => r.id)
+              );
+
+              const riddleToOpen = riddles.find(
+                (r) => r.id === currentNearbyKey
+              );
               if (riddleToOpen) {
                 console.log(
-                  `[Game] E key pressed, opening riddle for: ${nearbyKey}`
+                  `[Game] Found riddle, opening for: ${currentNearbyKey}`
                 );
                 // Play parchment unfurl sound when opening riddle
                 if (audioInitialized && audioEnabled) {
                   playSound("parchment-unfurl", { volume: 0.7 });
                 }
                 setActiveRiddle(riddleToOpen);
+              } else {
+                console.warn(
+                  `[Game] Could not find riddle for key: ${currentNearbyKey}`
+                );
               }
             }
+          } else {
+            console.log(`[Game] E key pressed but conditions not met:`, {
+              hasNearbyKey: !!currentNearbyKey,
+              hasActiveRiddle: !!activeRiddle,
+              hasShowDoorPuzzle: showDoorPuzzle,
+            });
           }
           break;
         case "ArrowLeft":
@@ -1019,15 +1062,47 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       let closestKey: string | null = null;
       let closestDistance = Infinity;
 
+      // Debug player position every few frames
+      if (Math.random() < 0.01) {
+        // Log 1% of the time to avoid spam
+        console.log(`[Game] Player position:`, {
+          x: playerGroup.position.x.toFixed(2),
+          y: playerGroup.position.y.toFixed(2),
+          z: playerGroup.position.z.toFixed(2),
+        });
+      }
+
       for (const riddleData of riddles) {
         if (!gameState.collectedKeys.has(riddleData.id)) {
           const keyMesh = keyMeshes[riddleData.id];
-          const distToKey = playerGroup.position.distanceTo(keyMesh.position);
+          // Use riddleData.position which is the actual position, not keyMesh.position
+          const distToKey = playerGroup.position.distanceTo(
+            riddleData.position
+          );
+
+          // Debug all key distances occasionally
+          if (Math.random() < 0.005) {
+            // Log 0.5% of the time
+            console.log(
+              `[Game] Distance to ${riddleData.id}: ${distToKey.toFixed(
+                2
+              )} (threshold: 2.0)`,
+              {
+                keyPosition: riddleData.position,
+                keyMeshPosition: keyMesh.position,
+              }
+            );
+          }
 
           // Track closest key for interaction prompt
           if (distToKey < 2.0 && distToKey < closestDistance) {
             closestKey = riddleData.id;
             closestDistance = distToKey;
+            console.log(
+              `[Game] Key in range: ${
+                riddleData.id
+              } at distance ${distToKey.toFixed(2)}`
+            );
           }
 
           // Play magical sparkle sound when approaching key (use a flag to avoid repeated plays)
@@ -1082,7 +1157,13 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       }
 
       // Update nearby interaction target
+      if (interactTarget !== nearbyKey) {
+        console.log(
+          `[Game] Updating nearbyKey from "${nearbyKey}" to "${interactTarget}"`
+        );
+      }
       setNearbyKey(interactTarget);
+      nearbyKeyRef.current = interactTarget;
 
       // Door opening animation
       if (gameState.doorOpen) {
