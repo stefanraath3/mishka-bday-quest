@@ -1349,12 +1349,8 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
     // Play key collection sound and riddle success sound
     console.log(`[Game] Puzzle solved, playing success sounds`);
     if (audioInitialized && audioEnabled) {
-      console.log(`[Game] Playing riddle-success sound`);
-      playSound("riddle-success", { volume: 0.8 });
-      setTimeout(() => {
-        console.log(`[Game] Playing key-pickup sound`);
-        playSound("key-pickup", { volume: 0.8 });
-      }, 500);
+      console.log(`[Game] Playing key-pickup sound`);
+      playSound("key-pickup", { volume: 0.8 });
     } else {
       console.warn(`[Game] Cannot play puzzle sounds - audio not ready`, {
         audioInitialized,
