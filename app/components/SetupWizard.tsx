@@ -199,7 +199,7 @@ export default function SetupWizard({
         🏰 Your Medieval Quest Awaits
       </h1>
       <p className="text-center text-amber-800 mb-6">
-        Welcome, brave Queen Queef, first of her name, Mishka! Here&apos;s what
+        Welcome, brave Queen Q, first of her name, Mishka! Here&apos;s what
         awaits you in the ancient castle...
       </p>
 
