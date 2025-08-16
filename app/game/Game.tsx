@@ -167,7 +167,8 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   const [collectedKeys, setCollectedKeys] = useState(new Set<string>());
   const [collectedWords, setCollectedWords] = useState(new Set<string>());
   const [doorOpen, setDoorOpen] = useState(false);
-  const [pointerLocked, setPointerLocked] = useState(false);
+  const [cameraRotateLeft, setCameraRotateLeft] = useState(false);
+  const [cameraRotateRight, setCameraRotateRight] = useState(false);
   const [activeRiddle, setActiveRiddle] = useState<(typeof riddles)[0] | null>(
     null
   );
@@ -183,9 +184,12 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
     isEnabled: audioEnabled,
   } = useAudio();
 
-  // Start ambient music when game loads
+  // Track if user has interacted with the game
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+
+  // Start ambient music only after user interaction
   useEffect(() => {
-    if (audioInitialized && audioEnabled) {
+    if (audioInitialized && audioEnabled && hasUserInteracted) {
       // Start the medieval ambient music with a slight delay for smooth transition
       setTimeout(() => {
         playBackgroundMusic("medieval-ambient");
@@ -201,6 +205,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   }, [
     audioInitialized,
     audioEnabled,
+    hasUserInteracted,
     playBackgroundMusic,
     stopBackgroundMusic,
   ]);
@@ -772,71 +777,81 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
     let pitch = 0.12; // slight downward look
     const maxPitch = THREE.MathUtils.degToRad(75);
     const moveSpeed = 4.2; // m/s
-    const turnSensitivity = 0.0025;
+    const cameraRotateSpeed = 2.0; // radians per second
     const cameraOffset = new THREE.Vector3(0, 1.6, 4.5); // third-person offset (relative to player, rotated by yaw)
+    let cameraRotatingLeft = false;
+    let cameraRotatingRight = false;
 
     function onKeyDown(e: KeyboardEvent) {
+      // Mark that user has interacted on first key press
+      if (!hasUserInteracted) {
+        setHasUserInteracted(true);
+      }
+
       switch (e.code) {
         case "KeyW":
-        case "ArrowUp":
           input.forward = true;
           break;
         case "KeyS":
-        case "ArrowDown":
           input.backward = true;
           break;
         case "KeyA":
-        case "ArrowLeft":
           input.left = true;
           break;
         case "KeyD":
-        case "ArrowRight":
           input.right = true;
+          break;
+        case "ArrowLeft":
+          cameraRotatingLeft = true;
+          setCameraRotateLeft(true);
+          break;
+        case "ArrowRight":
+          cameraRotatingRight = true;
+          setCameraRotateRight(true);
+          break;
+        case "ArrowUp":
+          pitch = Math.min(pitch + 0.1, maxPitch);
+          break;
+        case "ArrowDown":
+          pitch = Math.max(pitch - 0.1, -maxPitch);
           break;
       }
     }
     function onKeyUp(e: KeyboardEvent) {
       switch (e.code) {
         case "KeyW":
-        case "ArrowUp":
           input.forward = false;
           break;
         case "KeyS":
-        case "ArrowDown":
           input.backward = false;
           break;
         case "KeyA":
-        case "ArrowLeft":
           input.left = false;
           break;
         case "KeyD":
-        case "ArrowRight":
           input.right = false;
+          break;
+        case "ArrowLeft":
+          cameraRotatingLeft = false;
+          setCameraRotateLeft(false);
+          break;
+        case "ArrowRight":
+          cameraRotatingRight = false;
+          setCameraRotateRight(false);
           break;
       }
     }
 
-    function onMouseMove(e: MouseEvent) {
-      if (document.pointerLockElement !== renderer.domElement) return;
-      yaw -= e.movementX * turnSensitivity;
-      pitch -= e.movementY * turnSensitivity;
-      pitch = THREE.MathUtils.clamp(pitch, -maxPitch, maxPitch);
-      setPointerLocked(true);
-    }
-
-    function requestLock() {
-      renderer.domElement.requestPointerLock();
-    }
-    function onPointerLockChange() {
-      const locked = document.pointerLockElement === renderer.domElement;
-      setPointerLocked(locked);
+    // Add mouse click handler for user interaction
+    function onMouseClick() {
+      if (!hasUserInteracted) {
+        setHasUserInteracted(true);
+      }
     }
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
-    window.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("pointerlockchange", onPointerLockChange);
-    renderer.domElement.addEventListener("click", requestLock);
+    renderer.domElement.addEventListener("click", onMouseClick);
 
     // Resize handling
     function onResize() {
@@ -869,6 +884,14 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           Math.sin(time * 10 + index) * 4.0 + Math.sin(time * 18 + index) * 2.5;
         torchLights[index].intensity = baseIntensity + flicker;
       });
+
+      // Camera rotation with arrow keys
+      if (cameraRotatingLeft) {
+        yaw += cameraRotateSpeed * delta;
+      }
+      if (cameraRotatingRight) {
+        yaw -= cameraRotateSpeed * delta;
+      }
 
       // Movement vector in local (XZ) space
       const dir = new THREE.Vector3(0, 0, 0);
@@ -959,9 +982,6 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
             // Play parchment unfurl sound when opening riddle
             playSound("parchment-unfurl", { volume: 0.7 });
             setActiveRiddle(riddleData);
-            if (document.pointerLockElement) {
-              document.exitPointerLock();
-            }
           }
 
           // Continue key animation
@@ -981,9 +1001,6 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         );
         if (distToDoor < 2.5 && !showDoorPuzzle) {
           setShowDoorPuzzle(true);
-          if (document.pointerLockElement) {
-            document.exitPointerLock();
-          }
         }
       }
 
@@ -1037,9 +1054,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
-      window.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("pointerlockchange", onPointerLockChange);
-      renderer.domElement.removeEventListener("click", requestLock);
+      renderer.domElement.removeEventListener("click", onMouseClick);
       renderer.dispose();
       container.removeChild(renderer.domElement);
       // dispose geometries/materials
@@ -1164,7 +1179,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       <div className="pointer-events-none absolute left-4 top-4 z-10 space-y-2 text-white/90">
         <div className="rounded bg-black/40 px-3 py-2 text-xs sm:text-sm">
           <div className="font-semibold">Controls</div>
-          <div>Click to lock mouse • WASD to move</div>
+          <div>WASD to move • Arrow keys to look around</div>
         </div>
         <div className="rounded bg-black/40 px-3 py-2 text-xs sm:text-sm">
           <div>
@@ -1182,8 +1197,11 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
             ))}
           </div>
           <div>Door: {doorOpen ? "open" : "closed"}</div>
-          {!pointerLocked && !activeRiddle && !showDoorPuzzle && (
-            <div className="opacity-80">Click the scene to start</div>
+          {!hasUserInteracted && (
+            <div className="opacity-80">Press any key or click to start</div>
+          )}
+          {hasUserInteracted && !activeRiddle && !showDoorPuzzle && (
+            <div className="opacity-80">Arrow keys to look • WASD to move</div>
           )}
         </div>
         <div className="rounded bg-amber-600/80 px-3 py-2 text-xs sm:text-sm">

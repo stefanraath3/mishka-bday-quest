@@ -41,7 +41,24 @@ export function useAudio() {
     options?: { volume?: number; fade?: number }
   ) => {
     if (isInitialized && isEnabled) {
-      return audioManager.play(soundKey, options);
+      // Map the sound keys to AudioManager keys
+      const soundMap: Record<string, string> = {
+        "key-pickup": "keyCollected",
+        "riddle-success": "riddleSolved",
+        "door-unlock": "doorUnlock",
+        "door-creak": "doorOpen",
+        "chest-open": "chestOpen",
+        footsteps: "footsteps",
+        "torch-crackle": "torchFlicker",
+        "button-click": "buttonClick",
+        "parchment-unfurl": "scrollUnfurl",
+        "error-buzz": "wrongAnswer",
+        "party-horn": "confetti",
+        "magical-sparkle": "magicalSparkle",
+      };
+
+      const mappedKey = soundMap[soundKey] || soundKey;
+      return audioManager.play(mappedKey, options);
     }
   };
 
@@ -55,10 +72,23 @@ export function useAudio() {
     return newState;
   };
 
+  const playBackgroundMusic = (trackKey: string = "medieval-ambient") => {
+    if (!isInitialized) return;
+
+    // Map the track keys to AudioManager keys
+    const trackMap: Record<string, string> = {
+      "medieval-ambient": "ambientMusic",
+      "happy-birthday": "celebrationMusic",
+    };
+
+    const mappedKey = trackMap[trackKey] || trackKey;
+    audioManager.playBackgroundMusic(mappedKey);
+  };
+
   return {
     playSound,
     stopSound,
-    playBackgroundMusic: audioManager.playBackgroundMusic.bind(audioManager),
+    playBackgroundMusic,
     stopBackgroundMusic: audioManager.stopBackgroundMusic.bind(audioManager),
     setMasterVolume: audioManager.setMasterVolume.bind(audioManager),
     setBackgroundVolume: audioManager.setBackgroundVolume.bind(audioManager),

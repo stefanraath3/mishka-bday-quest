@@ -163,9 +163,9 @@ export default function GameStartModal({
               </div>
               <div className="flex items-center">
                 <div className="bg-amber-200 px-2 py-1 rounded font-mono text-xs mr-2 min-w-[60px] text-center">
-                  Arrow Keys
+                  Arrows
                 </div>
-                <span>Look around</span>
+                <span>Look around (camera)</span>
               </div>
               <div className="flex items-center">
                 <div className="bg-amber-200 px-2 py-1 rounded font-mono text-xs mr-2 min-w-[60px] text-center">
