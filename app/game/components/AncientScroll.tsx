@@ -75,21 +75,10 @@ export default function AncientScroll({
 
   const handleSubmit = () => {
     if (currentInput.toUpperCase() !== correctAnswer) {
-      console.log(`[AncientScroll] Wrong answer submitted:`, {
-        currentInput,
-        correctAnswer,
-        audioInitialized,
-        audioEnabled,
-      });
-      // Play error sound for wrong answer
-      if (audioInitialized && audioEnabled) {
-        console.log(`[AncientScroll] Playing error-buzz sound`);
-        playSound("error-buzz", { volume: 0.5 });
-      } else {
-        console.warn(
-          `[AncientScroll] Cannot play error sound - audio not ready`
-        );
-      }
+      // [REMOVED TEMPORARILY] Error buzz sound - to be added later
+      // if (audioInitialized && audioEnabled) {
+      //   playSound("error-buzz", { volume: 0.5 });
+      // }
       setAttempts((prev) => prev + 1);
       if (attempts >= 1) {
         setShowHint(true);

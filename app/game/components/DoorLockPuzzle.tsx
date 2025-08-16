@@ -82,21 +82,10 @@ export default function DoorLockPuzzle({
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      console.log(`[DoorLockPuzzle] Item dragged:`, {
-        active: active.id,
-        over: over.id,
-        audioInitialized,
-        audioEnabled,
-      });
-      // Play button click sound when moving items
-      if (audioInitialized && audioEnabled) {
-        console.log(`[DoorLockPuzzle] Playing button-click sound`);
-        playSound("button-click", { volume: 0.5 });
-      } else {
-        console.warn(
-          `[DoorLockPuzzle] Cannot play button-click sound - audio not ready`
-        );
-      }
+      // [REMOVED TEMPORARILY] Button click sound when moving items - to be added later
+      // if (audioInitialized && audioEnabled) {
+      //   playSound("button-click", { volume: 0.5 });
+      // }
 
       setItems((items) => {
         const oldIndex = items.indexOf(active.id as string);

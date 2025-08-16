@@ -176,6 +176,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   const [showBirthdayMessage, setShowBirthdayMessage] = useState(false);
   const [nearbyKey, setNearbyKey] = useState<string | null>(null);
   const nearbyKeyRef = useRef<string | null>(null);
+  const lastOpenedRiddleRef = useRef<string | null>(null);
 
   // Audio system integration
   const {
@@ -206,16 +207,6 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       playBackgroundMusic: typeof playBackgroundMusic,
     });
   }, [audioInitialized, audioEnabled]);
-
-  // Debug log nearbyKey state periodically
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (nearbyKey) {
-        console.log(`[Game] Current nearbyKey: "${nearbyKey}"`);
-      }
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [nearbyKey]);
 
   useEffect(() => {
     // Use the ref for game state
@@ -826,9 +817,10 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
             if (currentNearbyKey === "door") {
               // Open door puzzle
               console.log(`[Game] E key pressed, opening door puzzle`);
-              if (audioInitialized && audioEnabled) {
-                playSound("button-click", { volume: 0.6 });
-              }
+              // [REMOVED TEMPORARILY] Button click sound - to be added later
+              // if (audioInitialized && audioEnabled) {
+              //   playSound("button-click", { volume: 0.6 });
+              // }
               setShowDoorPuzzle(true);
             } else {
               // Open key riddle
@@ -847,9 +839,15 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
                 console.log(
                   `[Game] Found riddle, opening for: ${currentNearbyKey}`
                 );
-                // Play parchment unfurl sound when opening riddle
-                if (audioInitialized && audioEnabled) {
-                  playSound("parchment-unfurl", { volume: 0.7 });
+                // Play parchment unfurl sound when opening riddle - only if not already opened
+                if (lastOpenedRiddleRef.current !== currentNearbyKey) {
+                  if (audioInitialized && audioEnabled) {
+                    console.log(
+                      `[Game] Playing parchment sound for first time opening`
+                    );
+                    playSound("parchment-unfurl", { volume: 0.7 });
+                  }
+                  lastOpenedRiddleRef.current = currentNearbyKey;
                 }
                 setActiveRiddle(riddleToOpen);
               } else {
@@ -1062,15 +1060,14 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       let closestKey: string | null = null;
       let closestDistance = Infinity;
 
-      // Debug player position every few frames
-      if (Math.random() < 0.01) {
-        // Log 1% of the time to avoid spam
-        console.log(`[Game] Player position:`, {
-          x: playerGroup.position.x.toFixed(2),
-          y: playerGroup.position.y.toFixed(2),
-          z: playerGroup.position.z.toFixed(2),
-        });
-      }
+      // Debug player position occasionally (commented out for cleaner logs)
+      // if (Math.random() < 0.001) {
+      //   console.log(`[Game] Player position:`, {
+      //     x: playerGroup.position.x.toFixed(2),
+      //     y: playerGroup.position.y.toFixed(2),
+      //     z: playerGroup.position.z.toFixed(2),
+      //   });
+      // }
 
       for (const riddleData of riddles) {
         if (!gameState.collectedKeys.has(riddleData.id)) {
@@ -1080,29 +1077,25 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
             riddleData.position
           );
 
-          // Debug all key distances occasionally
-          if (Math.random() < 0.005) {
-            // Log 0.5% of the time
-            console.log(
-              `[Game] Distance to ${riddleData.id}: ${distToKey.toFixed(
-                2
-              )} (threshold: 2.0)`,
-              {
-                keyPosition: riddleData.position,
-                keyMeshPosition: keyMesh.position,
-              }
-            );
-          }
+          // Debug all key distances occasionally (commented out for cleaner logs)
+          // if (Math.random() < 0.0005) {
+          //   console.log(
+          //     `[Game] Distance to ${riddleData.id}: ${distToKey.toFixed(2)} (threshold: 2.0)`
+          //   );
+          // }
 
           // Track closest key for interaction prompt
           if (distToKey < 2.0 && distToKey < closestDistance) {
             closestKey = riddleData.id;
             closestDistance = distToKey;
-            console.log(
-              `[Game] Key in range: ${
-                riddleData.id
-              } at distance ${distToKey.toFixed(2)}`
-            );
+            // Only log when key first comes in range (not every frame)
+            if (nearbyKeyRef.current !== riddleData.id) {
+              console.log(
+                `[Game] Key in range: ${
+                  riddleData.id
+                } at distance ${distToKey.toFixed(2)}`
+              );
+            }
           }
 
           // Play magical sparkle sound when approaching key (use a flag to avoid repeated plays)
@@ -1156,14 +1149,14 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         }
       }
 
-      // Update nearby interaction target
-      if (interactTarget !== nearbyKey) {
+      // Update nearby interaction target - only update if actually changed
+      if (interactTarget !== nearbyKeyRef.current) {
         console.log(
-          `[Game] Updating nearbyKey from "${nearbyKey}" to "${interactTarget}"`
+          `[Game] Updating nearbyKey from "${nearbyKeyRef.current}" to "${interactTarget}"`
         );
+        setNearbyKey(interactTarget);
+        nearbyKeyRef.current = interactTarget;
       }
-      setNearbyKey(interactTarget);
-      nearbyKeyRef.current = interactTarget;
 
       // Door opening animation
       if (gameState.doorOpen) {
@@ -1176,21 +1169,13 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           delta
         );
 
-        // Play door creak sound when door starts moving
-        if (previousY < targetY - 0.5 && !doorMesh.userData.doorSoundPlayed) {
-          console.log(`[Game] Door animation trigger:`, {
-            previousY,
-            targetY,
-            audioInitialized,
-            audioEnabled,
-            doorSoundPlayed: doorMesh.userData.doorSoundPlayed,
-          });
-          if (audioInitialized && audioEnabled) {
-            console.log(`[Game] Playing door-creak sound`);
-            playSound("door-creak", { volume: 0.8 });
-            doorMesh.userData.doorSoundPlayed = true;
-          }
-        }
+        // [REMOVED TEMPORARILY] Door creak sound - to be added later
+        // if (previousY < targetY - 0.5 && !doorMesh.userData.doorSoundPlayed) {
+        //   if (audioInitialized && audioEnabled) {
+        //     playSound("door-creak", { volume: 0.8 });
+        //     doorMesh.userData.doorSoundPlayed = true;
+        //   }
+        // }
 
         // Update collider box position; deactivate once sufficiently open
         doorCollider.box = makeAabb(doorMesh.position, doorSize);
@@ -1204,29 +1189,13 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         chestLight.intensity = glowIntensity * 20;
       }
 
-      // Chest interaction
+      // [REMOVED TEMPORARILY] Chest interaction and birthday sounds - to be added later
       if (
         gameState.doorOpen &&
         playerGroup.position.distanceTo(magicalChest.position) < 2.0 &&
         !showBirthdayMessage
       ) {
-        console.log(`[Game] Chest interaction trigger:`, {
-          doorOpen: gameState.doorOpen,
-          distToChest: playerGroup.position.distanceTo(magicalChest.position),
-          showBirthdayMessage,
-          audioInitialized,
-          audioEnabled,
-        });
-        // Play chest opening sound and switch to celebration music
-        if (audioInitialized && audioEnabled) {
-          console.log(`[Game] Playing chest-open and party-horn sounds`);
-          playSound("chest-open", { volume: 0.8 });
-          playSound("party-horn", { volume: 0.9 }); // Add party horn for extra celebration
-          setTimeout(() => {
-            console.log(`[Game] Switching to happy-birthday music`);
-            playBackgroundMusic("happy-birthday");
-          }, 1000);
-        }
+        // Temporarily just show the birthday message without sounds
         setShowBirthdayMessage(true);
       }
     }
@@ -1370,20 +1339,16 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
 
   const handleCloseCrossword = () => {
     setActiveRiddle(null);
+    // Reset so sound plays again if same riddle is reopened
+    lastOpenedRiddleRef.current = null;
   };
 
   const handleDoorPuzzleSolved = () => {
-    console.log(`[Game] handleDoorPuzzleSolved called`, {
-      audioInitialized,
-      audioEnabled,
-    });
-    // Play door unlock sound
-    if (audioInitialized && audioEnabled) {
-      console.log(`[Game] Playing door-unlock sound`);
-      playSound("door-unlock", { volume: 0.9 });
-    } else {
-      console.warn(`[Game] Cannot play door-unlock sound - audio not ready`);
-    }
+    console.log(`[Game] handleDoorPuzzleSolved called`);
+    // [REMOVED TEMPORARILY] Door unlock sound - to be added later
+    // if (audioInitialized && audioEnabled) {
+    //   playSound("door-unlock", { volume: 0.9 });
+    // }
 
     gameStateRef.current.doorOpen = true;
     setDoorOpen(true);
