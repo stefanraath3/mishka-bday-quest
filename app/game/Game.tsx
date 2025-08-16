@@ -840,14 +840,11 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
               console.log(
                 `[Game] E key pressed, opening chest - ONLY PLACE BIRTHDAY MESSAGE SHOULD OPEN`
               );
-              // [REMOVED TEMPORARILY] Chest and birthday sounds - to be added later
-              // if (audioInitialized && audioEnabled) {
-              //   playSound("chest-open", { volume: 0.8 });
-              //   playSound("party-horn", { volume: 0.9 });
-              //   setTimeout(() => {
-              //     playBackgroundMusic("happy-birthday");
-              //   }, 1000);
-              // }
+              // Play chest open sound when chest is opened
+              if (audioInitialized && audioEnabled) {
+                console.log(`[Game] Playing chest-open sound`);
+                playSound("chest-open", { volume: 0.8 });
+              }
               setShowBirthdayMessage(true);
             } else {
               // Open key riddle
@@ -1162,6 +1159,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
 
       // Door interaction - check if near door with all keys
       let interactTarget = closestKey; // Start with the closest key
+      let interactDistance = closestDistance; // Track the distance for comparison
 
       if (
         gameState.collectedKeys.size === riddles.length &&
@@ -1173,6 +1171,27 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         // If door is closer than any key, show door prompt instead
         if (distToDoor < 2.5 && (!closestKey || distToDoor < closestDistance)) {
           interactTarget = "door";
+          interactDistance = distToDoor;
+        }
+      }
+
+      // Chest interaction - check if near chest (moved here before state update)
+      if (gameState.doorOpen && !showBirthdayMessage) {
+        const distToChest = playerGroup.position.distanceTo(
+          magicalChest.position
+        );
+        if (distToChest < 2.0) {
+          // Only log when chest first comes in range
+          if (nearbyKeyRef.current !== "chest") {
+            console.log(
+              `[Game] Chest in range at distance ${distToChest.toFixed(2)}`
+            );
+          }
+          // Update interaction target to "chest" if it's closer than any other interaction
+          if (!interactTarget || distToChest < interactDistance) {
+            interactTarget = "chest";
+            interactDistance = distToChest;
+          }
         }
       }
 
@@ -1220,25 +1239,6 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         const glowIntensity = (Math.sin(time * 2) + 1) / 2; // Pulsing effect
         chestMat.emissiveIntensity = glowIntensity * 1.5;
         chestLight.intensity = glowIntensity * 20;
-      }
-
-      // Chest interaction - check if near chest
-      if (gameState.doorOpen && !showBirthdayMessage) {
-        const distToChest = playerGroup.position.distanceTo(
-          magicalChest.position
-        );
-        if (distToChest < 2.0) {
-          // Only log when chest first comes in range
-          if (nearbyKeyRef.current !== "chest") {
-            console.log(
-              `[Game] Chest in range at distance ${distToChest.toFixed(2)}`
-            );
-          }
-          // Update interaction target to "chest" if it's closer than any key
-          if (!interactTarget || distToChest < closestDistance) {
-            interactTarget = "chest";
-          }
-        }
       }
     }
 
