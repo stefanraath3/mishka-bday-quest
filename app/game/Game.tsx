@@ -656,24 +656,15 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       "chamber-right"
     );
 
-    // Glowing magical chest in the final chamber
+    // Glowing magical chest in the final chamber - placeholder for now
     const chestSize = 1.2;
-    const chestGeo = new THREE.BoxGeometry(chestSize, chestSize, chestSize);
-    const chestMat = new THREE.MeshStandardMaterial({
-      color: 0xffd700,
-      emissive: 0xffd700,
-      emissiveIntensity: 0, // Initially not glowing
-      metalness: 0.8,
-      roughness: 0.3,
-    });
-    const magicalChest = new THREE.Mesh(chestGeo, chestMat);
-    magicalChest.position.set(0, chestSize / 2, farZ + chamberDepth - 3);
-    magicalChest.castShadow = true;
-    scene.add(magicalChest);
+    let magicalChest: THREE.Group = new THREE.Group(); // Placeholder
+    const chestPosition = new THREE.Vector3(0, 0, farZ + chamberDepth - 3);
 
     // Point light for the chest's glow
-    const chestLight = new THREE.PointLight(0xffd700, 0, 10);
-    chestLight.position.copy(magicalChest.position);
+    const chestLight = new THREE.PointLight(0x00cc44, 0, 10);
+    chestLight.position.copy(chestPosition);
+    chestLight.position.y += chestSize / 2; // Position light above the chest
     scene.add(chestLight);
 
     // Key (puzzle item) in the first room - ornate floating key
@@ -770,6 +761,57 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         capsule.position.set(0, 0, 0);
         capsule.rotation.y = Math.PI;
         playerGroup.add(capsule);
+      }
+    );
+
+    // Load the GLB chest model
+    loader.load(
+      "/models/chest.glb",
+      (gltf: GLTF) => {
+        magicalChest = gltf.scene;
+        magicalChest.position.copy(chestPosition);
+
+        // Scale the chest appropriately
+        magicalChest.scale.setScalar(chestSize);
+
+        // Configure materials for glow effect and shadows
+        magicalChest.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            // Apply green glowing material
+            const originalMaterial =
+              child.material as THREE.MeshStandardMaterial;
+            child.material = new THREE.MeshStandardMaterial({
+              color: 0x00cc44,
+              emissive: 0x00cc44,
+              emissiveIntensity: 0, // Initially not glowing
+              metalness: 0.8,
+              roughness: 0.3,
+              map: originalMaterial.map || null, // Preserve original texture if it exists
+            });
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+
+        scene.add(magicalChest);
+      },
+      undefined,
+      (error) => {
+        console.error("Failed to load chest model:", error);
+        // Fallback to box geometry if model fails to load
+        const chestGeo = new THREE.BoxGeometry(chestSize, chestSize, chestSize);
+        const chestMat = new THREE.MeshStandardMaterial({
+          color: 0x00cc44,
+          emissive: 0x00cc44,
+          emissiveIntensity: 0,
+          metalness: 0.8,
+          roughness: 0.3,
+        });
+        const fallbackChest = new THREE.Mesh(chestGeo, chestMat);
+        fallbackChest.position.copy(chestPosition);
+        fallbackChest.castShadow = true;
+        scene.add(fallbackChest);
+        magicalChest = fallbackChest as any; // Cast to Group for compatibility
       }
     );
 
@@ -1182,7 +1224,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         const distToChest = playerGroup.position.distanceTo(
           magicalChest.position
         );
-        if (distToChest < 2.0) {
+        if (distToChest < 3.5) {
           // Only log when chest first comes in range
           if (nearbyKeyRef.current !== "chest") {
             console.log(
@@ -1238,10 +1280,17 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           doorCollider.active = false;
         }
 
-        // Chest glow effect
+        // Chest glow effect - update all materials in the GLB model
         const glowIntensity = (Math.sin(time * 2) + 1) / 2; // Pulsing effect
-        chestMat.emissiveIntensity = glowIntensity * 1.5;
-        chestLight.intensity = glowIntensity * 20;
+        magicalChest.traverse((child) => {
+          if (
+            child instanceof THREE.Mesh &&
+            child.material instanceof THREE.MeshStandardMaterial
+          ) {
+            child.material.emissiveIntensity = glowIntensity * 0.6; // Reduced brightness
+          }
+        });
+        chestLight.intensity = glowIntensity * 8; // Reduced light intensity
       }
     }
 
@@ -1334,6 +1383,25 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           }
         });
       });
+
+      // Dispose magical chest GLB model
+      if (magicalChest) {
+        magicalChest.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+              const material = child.material as
+                | THREE.Material
+                | THREE.Material[];
+              if (Array.isArray(material)) {
+                material.forEach((mat) => mat.dispose());
+              } else {
+                material.dispose();
+              }
+            }
+          }
+        });
+      }
     };
   }, []);
 
