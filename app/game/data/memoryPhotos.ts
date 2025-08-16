@@ -56,12 +56,12 @@ export const memoryPhotos: MemoryPhoto[] = [
   {
     id: "photo-6",
     imagePath: "/images/memories/photo6.jpg",
-    title: "Cozy Movie Night",
+    title: "Mind-Bending Museum Night",
     description:
-      "One of many perfect movie nights where we laughed, cried, and ate way too much popcorn. Your commentary made every movie better, and these cozy nights are pure happiness.",
-    date: "November 14, 2023",
-    location: "Living Room Fort",
-    people: ["Mishka", "Movie Night Squad"],
+      "July 25th, 2025 at the Museum of Illusions - what a mind-bending night! That twisted tunnel that literally twisted the entire room around us was absolutely insane. So proud that we made it through (some even 3 times). Such an interesting night. Our brains were thoroughly twisted by the end hahah.",
+    date: "July 25, 2025",
+    location: "Museum of Illusions",
+    people: ["Stefan", "Mishka", "Garthy"],
   },
 ];
 
