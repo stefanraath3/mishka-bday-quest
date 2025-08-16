@@ -16,12 +16,12 @@ export const memoryPhotos: MemoryPhoto[] = [
   {
     id: "photo-2",
     imagePath: "/images/memories/photo2.jpg",
-    title: "Birthday Celebration",
+    title: "Epic Parking Struggle & Great Views",
     description:
-      "Your last birthday was incredible! The joy on your face when you blew out the candles, the surprise we had planned, and all of us together celebrating you. Every moment was filled with love and laughter.",
-    date: "March 12, 2023",
-    location: "Home Sweet Home",
-    people: ["Mishka", "Family", "Friends"],
+      "September 23rd, 2024 at Cafe Caprice - the day we spent almost an hour hunting for parking and arrived reeaaallly late! Remember how they first squeezed us into that tiny corner spot at the bar? We weren't having it and demanded an upgrade. Best decision ever - ended up with an amazing view and had so much fun! Great vaaarbss.",
+    date: "September 23, 2024",
+    location: "Cafe Caprice, Camps Bay",
+    people: ["Stefan", "Mishka", "Garthy"],
   },
   {
     id: "photo-3",
