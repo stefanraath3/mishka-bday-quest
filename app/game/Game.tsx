@@ -208,6 +208,13 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
     });
   }, [audioInitialized, audioEnabled]);
 
+  // Debug initial birthday message state
+  useEffect(() => {
+    console.log(
+      `[Game] Component mounted - Initial birthday message state: ${showBirthdayMessage}`
+    );
+  }, []);
+
   useEffect(() => {
     // Use the ref for game state
     const gameState = gameStateRef.current;
@@ -806,12 +813,18 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
             nearbyKeyFromState: nearbyKey,
             activeRiddle: !!activeRiddle,
             showDoorPuzzle,
+            showBirthdayMessage,
             collectedKeys: gameState.collectedKeys.size,
             totalKeys: riddles.length,
           });
 
           // Interact with nearby key or door
-          if (currentNearbyKey && !activeRiddle && !showDoorPuzzle) {
+          if (
+            currentNearbyKey &&
+            !activeRiddle &&
+            !showDoorPuzzle &&
+            !showBirthdayMessage
+          ) {
             console.log(`[Game] E key interaction conditions met`);
 
             if (currentNearbyKey === "door") {
@@ -824,7 +837,9 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
               setShowDoorPuzzle(true);
             } else if (currentNearbyKey === "chest") {
               // Open chest and show birthday message
-              console.log(`[Game] E key pressed, opening chest`);
+              console.log(
+                `[Game] E key pressed, opening chest - ONLY PLACE BIRTHDAY MESSAGE SHOULD OPEN`
+              );
               // [REMOVED TEMPORARILY] Chest and birthday sounds - to be added later
               // if (audioInitialized && audioEnabled) {
               //   playSound("chest-open", { volume: 0.8 });
@@ -1166,6 +1181,12 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         console.log(
           `[Game] Updating nearbyKey from "${nearbyKeyRef.current}" to "${interactTarget}"`
         );
+        // Special logging for chest interactions
+        if (interactTarget === "chest" || nearbyKeyRef.current === "chest") {
+          console.log(
+            `[Game] CHEST INTERACTION UPDATE - Birthday message status: ${showBirthdayMessage}`
+          );
+        }
         setNearbyKey(interactTarget);
         nearbyKeyRef.current = interactTarget;
       }
@@ -1207,6 +1228,12 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           magicalChest.position
         );
         if (distToChest < 2.0) {
+          // Only log when chest first comes in range
+          if (nearbyKeyRef.current !== "chest") {
+            console.log(
+              `[Game] Chest in range at distance ${distToChest.toFixed(2)}`
+            );
+          }
           // Update interaction target to "chest" if it's closer than any key
           if (!interactTarget || distToChest < closestDistance) {
             interactTarget = "chest";
