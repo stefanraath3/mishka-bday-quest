@@ -50,7 +50,7 @@ const riddles = [
       text: `I am a sound, a breath, a fleeting expression,
              Often embarrassing, a social transgression.
              Though sometimes silent, I make my presence known.
-             What am I, a puff that is quickly blown?`,
+             What am I, a puff down under that is quickly blown?`,
       hint: "A humorous, sometimes vulgar term for a certain bodily function.",
     },
     answer: "QUEEF",
@@ -180,12 +180,16 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
     playSound,
     playBackgroundMusic,
     stopBackgroundMusic,
+    stopSound,
     isInitialized: audioInitialized,
     isEnabled: audioEnabled,
   } = useAudio();
 
   // Track if user has interacted with the game
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  // Track footsteps sound state
+  const footstepsIdRef = useRef<number | undefined>(undefined);
+  const isPlayingFootsteps = useRef(false);
 
   useEffect(() => {
     // Use the ref for game state
@@ -878,7 +882,7 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       if (input.right) dir.x += 1;
       if (dir.lengthSq() > 0) dir.normalize();
 
-      // Handle animation state changes
+      // Handle animation state changes and footsteps sound
       const shouldWalk = dir.lengthSq() > 0.0001;
       if (shouldWalk !== isWalking) {
         isWalking = shouldWalk;
@@ -891,6 +895,13 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           if (walkAction) {
             walkAction.reset().fadeIn(0.2).play();
           }
+          // Start footsteps sound
+          if (audioInitialized && audioEnabled && !isPlayingFootsteps.current) {
+            playSound("footsteps", { volume: 0.4 }).then((id) => {
+              footstepsIdRef.current = id;
+              isPlayingFootsteps.current = true;
+            });
+          }
         } else {
           // Switch to idle animation
           if (walkAction) {
@@ -898,6 +909,12 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           }
           if (idleAction) {
             idleAction.reset().fadeIn(0.2).play();
+          }
+          // Stop footsteps sound
+          if (isPlayingFootsteps.current) {
+            stopSound("footsteps", footstepsIdRef.current);
+            isPlayingFootsteps.current = false;
+            footstepsIdRef.current = undefined;
           }
         }
       }
@@ -950,14 +967,25 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
           const keyMesh = keyMeshes[riddleData.id];
           const distToKey = playerGroup.position.distanceTo(keyMesh.position);
 
-          // Play magical sparkle sound when approaching key
+          // Play magical sparkle sound when approaching key (use a flag to avoid repeated plays)
           if (distToKey < 2.5 && distToKey > 2.0) {
-            await playSound("magical-sparkle", { volume: 0.4 });
+            // Track if we've played this sound recently
+            if (!keyMesh.userData.sparklePlayedRecently) {
+              if (audioInitialized && audioEnabled) {
+                playSound("magical-sparkle", { volume: 0.4 });
+                keyMesh.userData.sparklePlayedRecently = true;
+                setTimeout(() => {
+                  keyMesh.userData.sparklePlayedRecently = false;
+                }, 3000); // Reset after 3 seconds
+              }
+            }
           }
 
           if (distToKey < 1.5 && !activeRiddle) {
             // Play parchment unfurl sound when opening riddle
-            await playSound("parchment-unfurl", { volume: 0.7 });
+            if (audioInitialized && audioEnabled) {
+              playSound("parchment-unfurl", { volume: 0.7 });
+            }
             setActiveRiddle(riddleData);
           }
 
@@ -984,12 +1012,22 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
       // Door opening animation
       if (gameState.doorOpen) {
         const targetY = wallHeight + 0.1;
+        const previousY = doorMesh.position.y;
         doorMesh.position.y = THREE.MathUtils.damp(
           doorMesh.position.y,
           targetY,
           6,
           delta
         );
+
+        // Play door creak sound when door starts moving
+        if (previousY < targetY - 0.5 && !doorMesh.userData.doorSoundPlayed) {
+          if (audioInitialized && audioEnabled) {
+            playSound("door-creak", { volume: 0.8 });
+            doorMesh.userData.doorSoundPlayed = true;
+          }
+        }
+
         // Update collider box position; deactivate once sufficiently open
         doorCollider.box = makeAabb(doorMesh.position, doorSize);
         if (doorMesh.position.y > wallHeight - 0.2) {
@@ -1009,10 +1047,13 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
         !showBirthdayMessage
       ) {
         // Play chest opening sound and switch to celebration music
-        await playSound("chest-open", { volume: 0.8 });
-        setTimeout(() => {
-          playBackgroundMusic("happy-birthday");
-        }, 1000);
+        if (audioInitialized && audioEnabled) {
+          playSound("chest-open", { volume: 0.8 });
+          playSound("party-horn", { volume: 0.9 }); // Add party horn for extra celebration
+          setTimeout(() => {
+            playBackgroundMusic("happy-birthday");
+          }, 1000);
+        }
         setShowBirthdayMessage(true);
       }
     }
@@ -1115,8 +1156,13 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
     const scene = sceneRef.current;
     if (!scene) return;
 
-    // Play key collection sound
-    playSound("key-pickup", { volume: 0.8 });
+    // Play key collection sound and riddle success sound
+    if (audioInitialized && audioEnabled) {
+      playSound("riddle-success", { volume: 0.8 });
+      setTimeout(() => {
+        playSound("key-pickup", { volume: 0.8 });
+      }, 500);
+    }
 
     // Update game state ref
     gameStateRef.current.collectedKeys.add(activeRiddle.id);
@@ -1140,6 +1186,11 @@ export default function Game({ loadedAssets, onBackToMenu }: GameProps = {}) {
   };
 
   const handleDoorPuzzleSolved = () => {
+    // Play door unlock sound
+    if (audioInitialized && audioEnabled) {
+      playSound("door-unlock", { volume: 0.9 });
+    }
+
     gameStateRef.current.doorOpen = true;
     setDoorOpen(true);
     setShowDoorPuzzle(false);

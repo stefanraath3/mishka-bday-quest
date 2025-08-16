@@ -17,6 +17,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useAudio } from "@/lib/useAudio";
 
 interface DoorLockPuzzleProps {
   isVisible: boolean;
@@ -58,6 +59,11 @@ export default function DoorLockPuzzle({
 }: DoorLockPuzzleProps) {
   const [items, setItems] = useState<string[]>([]);
   const [isCorrect, setIsCorrect] = useState(false);
+  const {
+    playSound,
+    isInitialized: audioInitialized,
+    isEnabled: audioEnabled,
+  } = useAudio();
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -76,6 +82,11 @@ export default function DoorLockPuzzle({
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
+      // Play button click sound when moving items
+      if (audioInitialized && audioEnabled) {
+        playSound("button-click", { volume: 0.5 });
+      }
+
       setItems((items) => {
         const oldIndex = items.indexOf(active.id as string);
         const newIndex = items.indexOf(over.id as string);

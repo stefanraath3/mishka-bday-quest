@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useAudio } from "@/lib/useAudio";
 
 interface AncientScrollProps {
   isVisible: boolean;
@@ -25,6 +26,12 @@ export default function AncientScroll({
   const [isCorrect, setIsCorrect] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [attempts, setAttempts] = useState(0);
+
+  const {
+    playSound,
+    isInitialized: audioInitialized,
+    isEnabled: audioEnabled,
+  } = useAudio();
 
   const correctAnswer = useMemo(() => answer.toUpperCase(), [answer]);
   const maxLength = correctAnswer.length;
@@ -68,6 +75,10 @@ export default function AncientScroll({
 
   const handleSubmit = () => {
     if (currentInput.toUpperCase() !== correctAnswer) {
+      // Play error sound for wrong answer
+      if (audioInitialized && audioEnabled) {
+        playSound("error-buzz", { volume: 0.5 });
+      }
       setAttempts((prev) => prev + 1);
       if (attempts >= 1) {
         setShowHint(true);
