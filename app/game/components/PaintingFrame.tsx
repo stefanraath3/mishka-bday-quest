@@ -223,17 +223,19 @@ export function createPaintingFrameGeometry(
   );
 
   const canvas = new THREE.Mesh(canvasGeo, canvasMaterial);
-  
+
   // Smart positioning based on wall rotation
   // For back wall (Math.PI rotation), canvas should be behind the frame depth
   const isBackWall = Math.abs(wallRotation - Math.PI) < 0.1;
-  const canvasZ = isBackWall 
-    ? -(frameDepth / 2 + 0.02) // Behind frame for back wall (faces into room)  
-    : frameDepth / 2 + 0.02;   // In front for side walls
-    
+  const canvasZ = isBackWall
+    ? -(frameDepth / 2 + 0.02) // Behind frame for back wall (faces into room)
+    : frameDepth / 2 + 0.02; // In front for side walls
+
   canvas.position.z = canvasZ;
-  
-  console.log(`[PaintingFrame] ${photo.id} - Wall rotation: ${wallRotation}, isBackWall: ${isBackWall}, canvas Z: ${canvasZ}`);
+
+  console.log(
+    `[PaintingFrame] ${photo.id} - Wall rotation: ${wallRotation}, isBackWall: ${isBackWall}, canvas Z: ${canvasZ}`
+  );
 
   // Make sure canvas faces forward and is right-side up
   // Photos were displaying upside down, so rotate 180 degrees around Z axis
